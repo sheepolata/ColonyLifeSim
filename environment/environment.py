@@ -1,6 +1,8 @@
 import pygame
 import math
 
+import numpy as np
+
 import utils.utils as utils
 
 class Environment(object):
@@ -11,8 +13,8 @@ class Environment(object):
 
         self.obstacles = []
 
-        self.min_tile_w = int(self.width*0.15)
-        self.min_tile_h = int(self.height*0.15)
+        self.min_tile_w = int(self.width*0.05)
+        self.min_tile_h = int(self.height*0.05)
         self.graph_rect = []
         self.graph = {}
         self.graph_cost = {}
@@ -21,6 +23,9 @@ class Environment(object):
 
     def addObstacle(self, obs):
         self.obstacles.append(obs)
+        # self.splitEnvironment()
+        # self.constructGraph()
+
 
     def collideOneObstacle_Point(self, point):
         for o in self.obstacles:
@@ -35,6 +40,25 @@ class Environment(object):
                 return True
         return False
 
+    def getRange(self, i, j, step):
+        if i > j:
+            return range(j, i, step)
+        else:
+            return range(i, j, step)
+
+    def lineCollideObstacle(self, p1, p2):
+        a = [p1[0], p1[1]]
+        b = [p2[0], p2[1]]
+
+        coefficients = np.polyfit(a, b, 1)
+
+        for x in self.getRange(p1[0], p2[0], 1):
+            y = coefficients[0] * x + coefficients[1]
+            if self.collideOneObstacle_Point((x, y)):
+                return True
+        return False
+
+
     def getCurrentRect(self, point):
         for r in self.graph_rect:
             if r.collidepoint(point):
@@ -42,6 +66,7 @@ class Environment(object):
         return None
 
     def splitEnvironment(self):
+        print("split")
         self.graph_rect = []
 
         min_split_w = int(self.width*0.01)
@@ -72,7 +97,7 @@ class Environment(object):
                 for nr in new_rects:
                     processList.append(nr)
 
-            if(False and (current.width > self.min_tile_w or current.height > self.min_tile_h)):
+            elif((current.width > self.min_tile_w or current.height > self.min_tile_h)):
                 #split & add to process list
                 new_rects = splitRect(current, _correction=0)
 
@@ -84,14 +109,22 @@ class Environment(object):
                 #add to final list
                 self.graph_rect.append(current)
 
-        print("Compute useless")
-        to_rm = []
-        for r in self.graph_rect:
-            if self.collideOneObstacle_Rect(r):
-                to_rm.append(r)
+        print("Compute & remove  useless")
+        self.graph_rect = [x for x in self.graph_rect if not self.collideOneObstacle_Rect(x)]
+
+        # print("Compute useless")
+        # to_rm = []
+        # for r in self.graph_rect:
+        #     if self.collideOneObstacle_Rect(r):
+        #         to_rm.append(r)
         
-        print("Remove useless")
-        self.graph_rect = [x for x in self.graph_rect if x not in to_rm]
+        # print("Remove useless")
+        # self.graph_rect = [x for x in self.graph_rect if x not in to_rm]
+
+        # for item in to_rm:
+        #     while self.graph_rect.count(item) > 0:
+        #         self.graph_rect.remove(item)
+
         print("end split")
 
     def constructGraph(self):
@@ -104,13 +137,14 @@ class Environment(object):
         curr = 0
         for r in self.graph_rect:
             curr += 1
-            print(str(round((float(curr)/float(tot))*100, 2)) + "% (" + str(curr) + "/" + str(tot) + ")")
             self.loading = round((float(curr)/float(tot))*100, 2)
+            if self.loading % 4 == 0:
+                print(str(self.loading) + "% (" + str(curr) + "/" + str(tot) + ")")
 
             self.graph[r.center] = {}
             for other in filter(lambda x :x.center != r.center and areNeigbhours(r, x), self.graph_rect):
                 self.graph[r.center][other.center] = utils.distance2p(r.center, other.center) * self.graph_cost[other.center]
-                # if self.graph[r.center][other.center] == 0 : self.graph[r.center][other.center] = 1
+        print("constructGraph end")
 
 def splitRect(rect2split, _correction=0):
     nw = math.floor(rect2split.width/2) 

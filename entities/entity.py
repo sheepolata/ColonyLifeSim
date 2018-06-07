@@ -11,6 +11,8 @@ class Entity(object):
         self.pose = utils.Pose(0, 0)
         self.env = env
 
+        self.behaviour = None
+
         self.sprite = sprites.sprite.SpriteEntityBase(basic_colors.CYAN, self.pose)
 
     def setPose(self, x, y):
@@ -41,8 +43,15 @@ class NPC(Entity):
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
 
     def setBaseBehaviour(self):
+        del self.behaviour
         self.behaviour = behaviour.IdleBehaviour(self, self.env)
         self.behaviour.computePath()
+
+    def setGOTOBehaviour(self, st):
+        del self.behaviour
+        self.behaviour = behaviour.GOTOBehaviour(self, self.env, st)
+        self.behaviour.computePath()
+
 
     def setRandomPose(self, maxx, maxy):
         super(NPC, self).setRandomPose(maxx, maxy)
@@ -58,7 +67,11 @@ class NPC(Entity):
     def update(self):
         super(NPC, self).update()
 
-        self.behaviour.nextStep()
+        if self.behaviour != None:
+            ns = self.behaviour.nextStep()
+            if isinstance(self.behaviour, behaviour.GOTOBehaviour) and ns == -1:
+                print("Behaviour GOTO over")
+                self.setBaseBehaviour()
 
 
         self.pose.x += self.shift_x

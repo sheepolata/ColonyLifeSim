@@ -42,10 +42,12 @@ class SpriteNPC(SpriteEntityBase):
 
     def draw(self, screen, line_surface, line=False):
         super(SpriteNPC, self).draw(screen)
-        if line:
+        if line and self.npc.behaviour != None:
             for p in range(1, len(self.npc.behaviour.path)):
                 dep = self.npc.behaviour.path[p-1]
+                # dep = self.npc.getPose()
                 arr = self.npc.behaviour.path[p]
+                # arr = self.npc.behaviour.target
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, dep, arr)
 
 

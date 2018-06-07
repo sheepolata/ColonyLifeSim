@@ -1,6 +1,7 @@
 
 import entities.entity as entities
 import environment.environment as Env
+import behaviours.behaviour as behaviour
 
 import utils.utils as utils
 import utils.basic_colors as basic_colors
@@ -46,7 +47,7 @@ def main():
     env.constructGraph()
 
     l_entities = []
-    for i in range(1):
+    for i in range(10):
         entity = entities.NPC(env)
         # entity.setPose(50, 50)
         entity.setRandomPose(width, height)
@@ -66,6 +67,30 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == K_ESCAPE :
                     run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                #LMB
+                if event.button == 1:
+                    mp = pygame.mouse.get_pos()
+                    rect = env.collideOneObstacle_Point(mp)
+                    if rect != None:
+                        for e in l_entities:
+                            if isinstance(e.behaviour, behaviour.GOTOBehaviour):
+                                e.behaviour.setSpecificTarget(mp)
+                            else:
+                                e.setGOTOBehaviour(mp)
+                    pass
+                #MMB
+                if event.button == 2:
+                    pass
+                #RMB
+                if event.button == 3:
+                    pass
+                #Mouth Wheel up
+                if event.button == 4:
+                    pass
+                #Mouth Wheel down
+                if event.button == 5:
+                    pass
 
         #Logic
         
@@ -74,10 +99,10 @@ def main():
         for o in env.obstacles:
             o.sprite.draw(screen)
 
-        # for k in env.graph.keys():
-        #     for pos in env.graph[k]:
-        #         # print env.graph[k][pos]/10
-        #         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+        for k in env.graph.keys():
+            for pos in env.graph[k]:
+                # print env.graph[k][pos]/10
+                pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
 
         #Entities
         for e in l_entities:
@@ -85,8 +110,8 @@ def main():
             e.sprite.draw(screen, alpha_surface, True)
             # e.drawDebugCollision(alpha_surface)
 
-        # for r in env.graph_rect:
-        #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+        for r in env.graph_rect:
+            pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
 
 
