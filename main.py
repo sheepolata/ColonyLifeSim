@@ -10,13 +10,16 @@ import pygame
 import random
 import sys
 
-width, height = 860, 680
 
 from screeninfo import get_monitors
 monitor = get_monitors()[0]
 
+# width, height = 860, 680
+width, height = int(monitor.width*0.9), int(monitor.height*0.9)
+
 import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(width/2),(monitor.height/2)-(height/2))
+
 
 from pygame.locals import *
 
@@ -31,7 +34,7 @@ def main():
         display_text = font.render(text, True, (255, 255, 255))
         screen.blit(display_text, (env.width / 2, env.height / 2))
 
-    for i in range(30):
+    for i in range(60):
         o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
         o.setRandomPose(width, height)
         env.addObstacle(o)
@@ -47,7 +50,7 @@ def main():
     env.constructGraph()
 
     l_entities = []
-    for i in range(10):
+    for i in range(100):
         entity = entities.NPC(env)
         # entity.setPose(50, 50)
         entity.setRandomPose(width, height)
@@ -103,15 +106,14 @@ def main():
             for pos in env.graph[k]:
                 # print env.graph[k][pos]/10
                 pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+        for r in env.graph_rect:
+            pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         #Entities
         for e in l_entities:
             e.update()
             e.sprite.draw(screen, alpha_surface, True)
-            # e.drawDebugCollision(alpha_surface)
 
-        for r in env.graph_rect:
-            pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
 
 
