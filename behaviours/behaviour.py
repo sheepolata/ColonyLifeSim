@@ -14,8 +14,8 @@ class Behaviour(object):
         self.path = []
         self.ipath = 0
 
-        self.state = "Nothing"
-        self.label = "NaN"
+        self.state = "nothing"
+        self.label = "NAN"
 
         self.target = self.entity.getPose()
 
@@ -49,8 +49,10 @@ class Behaviour(object):
         self.path.append(self.target)
 
     def nextStep(self):
-        if not self.path or self.ipath >= len(self.path):
-            return -1
+        if not self.path:
+            return 1
+        if self.ipath >= len(self.path):
+            return 1
 
         self.target = self.path[self.ipath]
 
@@ -79,16 +81,28 @@ class Behaviour(object):
         if self.entity.pose.y == self.target[1]:
             self.entity.shift_y = 0
 
-        return 1
+        return 0
 
     def getPath(self):
         return self.path[self.ipath]
+
+class EmptyBehaviour(Behaviour):
+    def __init__(self, entity, env):
+        super(EmptyBehaviour, self).__init__(entity, env)
+        self.state = "empty"
+        self.label = "EMP"
+    def computePath(self):
+        pass
+
+    def nextStep(self):
+        return 1
+        
 
 class IdleBehaviour(Behaviour):
     def __init__(self, entity, env):
         super(IdleBehaviour, self).__init__(entity, env)
 
-        self.state = "Idle"
+        self.state = "idle"
         self.label = "I"
 
         self.collision_debug = []
@@ -110,43 +124,17 @@ class IdleBehaviour(Behaviour):
         super(IdleBehaviour, self).computePath(_target)
 
     def nextStep(self):
-        if not self.path or self.ipath >= len(self.path):
-            return -1 
-
-        self.target = self.path[self.ipath]
-
-
-        if utils.near(self.entity.getPose(), self.target, _thresh=self.entity.speed + 1):
-            self.ipath += 1
-            self.entity.shift_x = 0
-            self.entity.shift_y = 0
-            if self.ipath >= len(self.path):
-                self.computePath()
-                self.ipath = 0
-            return 0
-
-        if self.entity.pose.x > self.target[0]:
-            self.entity.shift_x = -self.entity.speed
-        if self.entity.pose.x < self.target[0]:
-            self.entity.shift_x = self.entity.speed
-        if self.entity.pose.x == self.target[0]:
-            self.entity.shift_x = 0
-
-        if self.entity.pose.y > self.target[1]:
-            self.entity.shift_y = -self.entity.speed
-        if self.entity.pose.y < self.target[1]:
-            self.entity.shift_y = self.entity.speed
-        if self.entity.pose.y == self.target[1]:
-            self.entity.shift_y = 0
-
-        return 1
+        ns = super(IdleBehaviour, self).nextStep()
+        if ns == 1:
+            self.computePath()
+        return ns
 
 class GOTOBehaviour(Behaviour):
     def __init__(self, entity, env, specific_target):
         super(GOTOBehaviour, self).__init__(entity, env)
         self.specific_target = specific_target
 
-        self.state = "Goto"
+        self.state = "goto"
         self.label = "GT"
 
     def setSpecificTarget(self, st):
@@ -156,12 +144,71 @@ class GOTOBehaviour(Behaviour):
         del self.path[:]
         super(GOTOBehaviour, self).computePath(self.specific_target)
 
-    def nextStep(self):
-        ns = super(GOTOBehaviour, self).nextStep()
-        return ns
+class GOTORessource(GOTOBehaviour):
+    def __init__(self, entity, env, ressource):
+        self.ressource = ressource
+        super(GOTORessource, self).__init__(entity, env, self.ressource.getPose())
 
+        self.state = "gotoressource"
+        self.label = "GTR"
+
+class Wait(Behaviour):
+    def __init__(self, entity, env, clock):
+        super(Wait, self).__init__(entity, env)
+        self.clock = clock
+
+        self.state = "wait"
+        self.label = "W"
+
+    def computePath(self):
+        return
+
+    def nextStep(self):
+        self.clock -= 1
+        if self.clock <= 0:
+            return 1
+        return 0
         
 
+class Harvest(Behaviour):
+    def __init__(self, entity, env, res):
+        super(Harvest, self).__init__(entity, env)
+        self.entity = entity
+        self.env = env
+        self.res = res
+
+        self.state = "harvest"
+        self.label = "HAR"
+
+    def computePath(self):
+        return
+
+    def nextStep(self):
+        if self.res == None or not utils.near(self.entity.getPose(), self.res.getPose(), _thresh=15):
+            return -1
+
+        self.entity.collectRessource(self.res)
+
+        return 1
+        
+class RegrowBehaviour(Behaviour):
+    def __init__(self, res, env):
+        super(RegrowBehaviour, self).__init__(res, env)
+
+        self.state = "regrow"
+        self.label = "REG"
+
+    def computePath(self):
+        return
+
+    def nextStep(self):
+        self.entity.regrow()
+        return 1
+        
+
+
+
+        
         
 
 

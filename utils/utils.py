@@ -1,4 +1,5 @@
 import math
+import threading
 
 class Pose(object):
     """docstring for Pose"""
@@ -28,7 +29,7 @@ def near(a, target, _thresh=10):
     return (a[0] > (target[0] - _thresh) and a[0] < (target[0] + _thresh)) and (a[1] > (target[1] - _thresh) and a[1] <(target[1] + _thresh))
 
 def distance2p(a,b):
-    return math.sqrt((b[0]-b[0])**2+(a[1]-b[1])**2)
+    return math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2)
 
 class perpetualTimer():
     def __init__(self,t,hFunction):

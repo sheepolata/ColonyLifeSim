@@ -1,5 +1,6 @@
 import pygame
 import utils.basic_colors as basic_colors
+from pygame.locals import *
 
 
 class SpriteEntityBase(object):
@@ -8,7 +9,7 @@ class SpriteEntityBase(object):
         self.color = color
         self.pose = pose
 
-        self.size = 10
+        self.size = 4
         
         self.rect = pygame.Rect(pose.x-(self.size/2), pose.y-(self.size/2), self.size, self.size)
 
@@ -42,6 +43,13 @@ class SpriteNPC(SpriteEntityBase):
 
     def draw(self, screen, line_surface, line=False):
         super(SpriteNPC, self).draw(screen)
+
+        text = str(self.npc.hunger)
+        font = pygame.font.SysFont('Sans', 10)
+        displ_text = font.render(text, True, basic_colors.BLACK)
+        screen.blit(displ_text, self.rect.center)
+
+
         if line and self.npc.behaviour != None:
             for p in range(1, len(self.npc.behaviour.path)):
                 dep = self.npc.behaviour.path[p-1]
@@ -49,6 +57,31 @@ class SpriteNPC(SpriteEntityBase):
                 arr = self.npc.behaviour.path[p]
                 # arr = self.npc.behaviour.target
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, dep, arr)
+
+
+class SpriteRessource(SpriteEntityBase):
+    """docstring for SpriteRessource"""
+    def __init__(self, ressource, pose):
+        self.ressource = ressource
+
+        color = basic_colors.WHITE
+        if self.ressource.name == "food":
+            color = basic_colors.LIME
+
+        self.color_non_havestable = basic_colors.ALPHA_RED
+
+        super(SpriteRessource, self).__init__(color, pose)
+
+    def draw(self, screen, alpha_surface):
+        super(SpriteRessource, self).draw(screen)
+        if not self.ressource.harvestable:
+            pygame.draw.circle(alpha_surface, self.color_non_havestable, self.rect.center, self.size)
+
+        text = str(self.ressource.value)
+        font = pygame.font.SysFont('Sans', 10)
+        displ_text = font.render(text, True, basic_colors.BLACK)
+        screen.blit(displ_text, self.rect.center)
+
 
 
         
