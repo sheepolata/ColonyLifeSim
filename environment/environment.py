@@ -258,12 +258,6 @@ def splitRect(rect2split, _correction=0):
     nw = int(round(nwf))
     nh = int(round(nhf))
 
-    # if nwf.is_integer():
-    #     nw += 1
-    # if nhf.is_integer():
-    #     nh += 1
-    # _correction=1
-
     r1 = pygame.Rect((rect2split.left, rect2split.top), (nw, nh))
 
     r2 = pygame.Rect((rect2split.left + nw, rect2split.top), (nw+_correction, nh))
@@ -274,9 +268,21 @@ def splitRect(rect2split, _correction=0):
 
     return [r1, r2, r3, r4]
 
-# def areNeighbours(rect1, rect2):
-#     temp1 = rect1.inflate(6, 6)
-#     temp2 = rect2.inflate(6, 6)
-
 def areNeigbhours(rect1, rect2):
-    return rect1.inflate(6, 6).colliderect(rect2.inflate(6, 6))
+    # return (
+    #     rect1.top == rect2.top + rect2.height
+    #     or rect1.top + rect1.height == rect2.top
+    #     or rect1.left == rect2.left + rect2.width
+    #     or rect1.left + rect1.width == rect2.left
+    #     )
+    return (
+        (utils.closeEnough(rect1.top, rect2.top + rect2.height, _thresh=5) and rect1.left == rect2.left)
+        or (utils.closeEnough(rect1.top + rect1.height, rect2.top, _thresh=5) and rect1.left == rect2.left)
+        or (utils.closeEnough(rect1.left, rect2.left + rect2.width, _thresh=5) and rect1.top == rect2.top)
+        or (utils.closeEnough(rect1.left + rect1.width, rect2.left, _thresh=5) and rect1.top == rect2.top)
+        )
+
+
+
+# def areNeigbhours(rect1, rect2):
+#     return rect1.inflate(1, 1).colliderect(rect2.inflate(1, 1))
