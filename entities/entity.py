@@ -270,3 +270,39 @@ class Ressource(Entity):
             self.harvestable = False
         return v
         
+class Spawner(Entity):
+    def __init__(self, env, name, spawnee):
+        super(Spawner, self).__init__(env)
+        self.name = name
+        self.spawnee = spawnee
+
+        self.period = random.randint(30, 60)
+        self.radius = 200
+
+        self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
+    
+    def setPose(self, x, y):
+        super(Ressource, self).setPose(x, y)
+        self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
+
+    def setSpawnerBehaviour(self):
+        del self.behaviour
+        self.behaviour = behaviour.Wait(self, self.env, self.period)
+
+    def spawn(self):
+        if self.name == "foodspawner":
+            res = entities.Ressource(self.env, "food", random.randint(30, 60), False)
+
+            npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
+            npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
+            asser = self.env.getCurrentRect((npx, npy))
+            while asser == None:
+                npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
+                npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
+
+            res.pose.x = npx
+            res.pose.y = npy
+
+            res.setRegrowBehaviour()
+            self.env.addRessource(res)
+        

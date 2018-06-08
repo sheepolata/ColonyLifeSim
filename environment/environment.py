@@ -166,6 +166,17 @@ class Environment(object):
 
         self.graph_rect = [x for x in self.graph_rect if not x.center in to_rm]
 
+        for rm in to_rm:
+            self.graph.pop(rm, None)
+
+        # for k in self.graph.keys():
+        #     for n in self.graph[k]:
+        #         to_rm_tmp = []
+        #         for p in n:
+        #             if n in to_rm:
+        #                 to_rm_tmp.append(p)
+        #         self.graph[k] = [x for x in self.graph[k] if not x in to_rm_tmp]
+                
         self.constructGraph()
 
         print("End constructRiver")
@@ -241,8 +252,17 @@ class Environment(object):
         print("constructGraph end")
 
 def splitRect(rect2split, _correction=0):
-    nw = math.floor(rect2split.width/2) 
-    nh = math.floor(rect2split.height/2)
+    nwf = rect2split.width/2.0
+    nhf = rect2split.height/2.0
+    
+    nw = int(round(nwf))
+    nh = int(round(nhf))
+
+    # if nwf.is_integer():
+    #     nw += 1
+    # if nhf.is_integer():
+    #     nh += 1
+    # _correction=1
 
     r1 = pygame.Rect((rect2split.left, rect2split.top), (nw, nh))
 

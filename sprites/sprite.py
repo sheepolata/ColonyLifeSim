@@ -82,6 +82,26 @@ class SpriteRessource(SpriteEntityBase):
         displ_text = font.render(text, True, basic_colors.BLACK)
         screen.blit(displ_text, self.rect.center)
 
+class SpriteSpawner(SpriteEntityBase):
+    """docstring for SpriteRessource"""
+    def __init__(self, spawner, pose):
+        self.spawner = spawner
+
+        color = basic_colors.WHITE
+        if self.spawner.name == "foodspawner":
+            color = basic_colors.LIME
+
+        self.color_non_havestable = basic_colors.ALPHA_RED
+
+        super(SpriteRessource, self).__init__(color, pose)
+
+    def draw(self, screen, alpha_surface):
+        super(SpriteRessource, self).draw(screen)
+
+        # text = str(self.spawner.name)
+        # font = pygame.font.SysFont('Sans', 10)
+        # displ_text = font.render(text, True, basic_colors.BLACK)
+        # screen.blit(displ_text, self.rect.center)
 
 
         

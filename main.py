@@ -140,12 +140,12 @@ def main():
         
 
 
-        # for k in env.graph.keys():
-        #     for pos in env.graph[k]:
-        #         # print env.graph[k][pos]/10
-        #         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
-        # for r in env.graph_rect:
-        #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+        for k in env.graph.keys():
+            for pos in env.graph[k]:
+                # print env.graph[k][pos]/10
+                pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+        for r in env.graph_rect:
+            pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         screen.blit(alpha_surface, (0, 0))
         pygame.display.flip()
