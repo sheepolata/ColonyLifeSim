@@ -132,7 +132,7 @@ class Environment(object):
                 self.river_path.append(wp)
 
         chosen = []
-        for i in range(5):
+        for i in range(10):
             chosen.append(random.choice(self.river_path))
 
         # print chosen

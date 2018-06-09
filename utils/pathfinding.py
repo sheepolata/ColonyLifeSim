@@ -81,3 +81,6 @@ def reconstructPath(came_from, current):
         current = came_from[current]
         total_path.append(current)
     return total_path
+
+def computePathLength(path):
+    pass

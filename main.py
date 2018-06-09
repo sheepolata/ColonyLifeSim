@@ -52,13 +52,13 @@ def main():
     env.constructRiver()
 
     l_entities = []
-    for i in range(1):
+    for i in range(20):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(width, height)
         entity.setIdleBehaviour()
         l_entities.append(entity)
 
-    for i in range(1):
+    for i in range(12):
         res = entities.Ressource(env, "food", random.randint(75, 150), True)
         res.setRegrowBehaviour()
         env.addRessource(res)
@@ -140,12 +140,12 @@ def main():
         
 
 
-        for k in env.graph.keys():
-            for pos in env.graph[k]:
-                # print env.graph[k][pos]/10
-                pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
-        for r in env.graph_rect:
-            pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+        # for k in env.graph.keys():
+        #     for pos in env.graph[k]:
+        #         # print env.graph[k][pos]/10
+        #         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+        # for r in env.graph_rect:
+        #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         screen.blit(alpha_surface, (0, 0))
         pygame.display.flip()
