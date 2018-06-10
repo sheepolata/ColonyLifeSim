@@ -47,7 +47,7 @@ class SpriteNPC(SpriteEntityBase):
         text = str(self.npc.hunger)
         font = pygame.font.SysFont('Sans', 10)
         displ_text = font.render(text, True, basic_colors.BLACK)
-        screen.blit(displ_text, self.rect.center)
+        screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
 
         if line and self.npc.behaviour != None:

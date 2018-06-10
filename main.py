@@ -3,6 +3,7 @@ import entities.entity as entities
 import environment.environment as Env
 import behaviours.behaviour as behaviour
 
+import utils.pathfinding as pf
 import utils.utils as utils
 import utils.basic_colors as basic_colors
 
@@ -15,7 +16,7 @@ from screeninfo import get_monitors
 monitor = get_monitors()[0]
 
 # width, height = 860, 680
-width, height = int(monitor.width*0.5), int(monitor.height*0.5)
+width, height = int(monitor.width*0.65), int(monitor.height*0.65)
 
 import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(width/2),(monitor.height/2)-(height/2))
@@ -28,37 +29,29 @@ pygame.init()
 def main():
     env = Env.Environment(width, height)
 
-    def display_loading(env, screen):
-        text = "Loading... " + str(env.loading) + "%"
-        font = pygame.font.SysFont('Sans', int(50))
-        display_text = font.render(text, True, (255, 255, 255))
-        screen.blit(display_text, (env.width / 2, env.height / 2))
-
-    for i in range(10):
-        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
-        o.setRandomPose(width, height)
-        env.addObstacle(o)
-
-
     clock = pygame.time.Clock()
 
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Colony Life Sim")
     alpha_surface = pygame.Surface((width, height), pygame.SRCALPHA)
     
+    for i in range(10):
+        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
+        o.setRandomPose(width, height)
+        env.addObstacle(o)
     env.splitEnvironment()
-    env.constructGraph()
+    env.constructGraph(Env.areNeigbhoursSquare)
+    env.constructRiver(5)
 
-    env.constructRiver()
 
     l_entities = []
-    for i in range(20):
+    for i in range(1):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(width, height)
         entity.setIdleBehaviour()
         l_entities.append(entity)
 
-    for i in range(12):
+    for i in range(10):
         res = entities.Ressource(env, "food", random.randint(75, 150), True)
         res.setRegrowBehaviour()
         env.addRessource(res)
@@ -80,12 +73,19 @@ def main():
                 #LMB
                 if event.button == 1:
                     mp = pygame.mouse.get_pos()
-                    rect = env.collideOneObstacle_Point(mp)
+                    rect = env.getCurrentRect(mp)
                     if rect != None:
                         for e in l_entities:
+                            rect_e = env.getCurrentRect(e.getPose())
+                            if rect_e != None:
+                                print pf.getPathLength(env, rect.center, rect_e.center)
+                            else:
+                                print "error rect entity not found"
                             if e.behaviour.state == "goto":
                                 e.behaviour.setSpecificTarget(mp)
                                 e.behaviour.computePath()
+
+
                             else:
                                 e.setGOTOBehaviour(mp)
                     pass
@@ -97,7 +97,7 @@ def main():
                     mp = pygame.mouse.get_pos()
                     rect = env.collideOneObstacle_Point(mp)
                     if rect != None:
-                        res = entities.Ressource(env, "food", random.randint(10, 20), False)
+                        res = entities.Ressource(env, "food", random.randint(30, 70), False)
                         res.setPose(mp[0], mp[1])
                         res.setRegrowBehaviour()
                         env.addRessource(res)
@@ -123,7 +123,7 @@ def main():
         l_entities = [x for x in l_entities if not x.dead]
 
         #Display
-#       Env
+        #Env
         for o in env.obstacles:
             o.sprite.draw(screen)
         for i in range(1, len(env.river_path)):
@@ -139,7 +139,7 @@ def main():
             e.sprite.draw(screen, alpha_surface, True)
         
 
-
+        #Display Debug
         # for k in env.graph.keys():
         #     for pos in env.graph[k]:
         #         # print env.graph[k][pos]/10

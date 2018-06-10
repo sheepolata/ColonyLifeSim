@@ -40,9 +40,10 @@ class Behaviour(object):
         # if self.env.lineCollideObstacle(self.entity.getPose(), self.target):
         path_astar = pf.astar(current_rect.center, target_rect.center , self.env)
 
-        if path_astar == None:
+        if path_astar == None :
             print("Error, no path found")
             return
+        # path_astar = path_astar[:-1]
         for p in reversed(path_astar):
             self.path.append(p)
 
@@ -115,13 +116,16 @@ class IdleBehaviour(Behaviour):
 
         tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
         ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
-        while self.env.collideOneObstacle_Point((tx, ty)):
-            tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
-            ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
 
-        _target = (tx, ty)
+        if(self.env.getCurrentRect((tx, ty)) != None 
+            and pf.getPathLength(self.env, self.env.getCurrentRect(self.entity.getPose()).center, 
+                self.env.getCurrentRect((tx, ty)).center) <= 150
+            ):
+            _target = (tx, ty)
 
-        super(IdleBehaviour, self).computePath(_target)
+            super(IdleBehaviour, self).computePath(_target)
+        else: 
+            return
 
     def nextStep(self):
         ns = super(IdleBehaviour, self).nextStep()
@@ -151,6 +155,12 @@ class GOTORessource(GOTOBehaviour):
 
         self.state = "gotoressource"
         self.label = "GTR"
+
+        self.count = 0
+
+    def nextStep(self):
+        self.count = self.count % 20
+        return super(GOTORessource, self).nextStep()
 
 class Wait(Behaviour):
     def __init__(self, entity, env, clock):

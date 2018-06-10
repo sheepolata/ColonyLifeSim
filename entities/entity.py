@@ -162,12 +162,17 @@ class NPC(Entity):
             if self.haveFood():
                 self.consumeFood()
             else:
-                self.target_res = self.env.getClosestRessource(self.getPose(), "food")
-                if self.target_res == None:
+                target_res_tmp = self.env.getClosestRessource(self.getPose(), "food")
+                if target_res_tmp == None:
                     if self.behaviour.state != "idle":
                         self.setIdleBehaviour()
                 elif self.behaviour.state != "wait":
+                    if self.behaviour.state == "gotoressource" and self.behaviour.count == 0:
+                        if target_res_tmp != self.target_res:
+                            self.target_res = target_res_tmp
+                            self.setGOTORessource(self.target_res)
                     if self.behaviour.state != "gotoressource" and self.behaviour.state != "harvest":
+                        self.target_res = target_res_tmp
                         if utils.near(self.getPose(), self.target_res.getPose(), _thresh=15):
                             self.setHarvestBehaviour(self.target_res)
                         else:
@@ -253,6 +258,7 @@ class Ressource(Entity):
                 self.setWaitBehaviour(20)
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setRegrowBehaviour()
+        super(Ressource, self).update()
 
     def regrow(self):
         if self.replenishable:

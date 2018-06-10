@@ -56,7 +56,7 @@ class Environment(object):
 
         tx = random.randint(mini, maxi_w)
         ty = random.randint(mini, maxi_h)
-        while self.collideOneObstacle_Point((tx, ty)):
+        while self.getCurrentRect((tx, ty)) == None:
             tx = random.randint(mini, maxi_w)
             ty = random.randint(mini, maxi_h)
 
@@ -93,7 +93,7 @@ class Environment(object):
                 return True
         return False
 
-    def constructRiver(self):
+    def constructRiver(self, nb_passage):
         print("constructRiver")
         paths = []
 
@@ -132,7 +132,7 @@ class Environment(object):
                 self.river_path.append(wp)
 
         chosen = []
-        for i in range(10):
+        for i in range(nb_passage):
             chosen.append(random.choice(self.river_path))
 
         # print chosen
@@ -144,7 +144,7 @@ class Environment(object):
 
         # # for rm in to_rm:
         # #     rect_rm = self.getCurrentRect(rm)
-        # #     for neigh in filter(lambda x :x.center != rect_rm.center and areNeigbhours(rect_rm, x), self.graph_rect):
+        # #     for neigh in filter(lambda x :x.center != rect_rm.center and areNeigbhoursSquare(rect_rm, x), self.graph_rect):
         # #         toadd_to_rm.append(neigh.center)
 
         # for rm in to_rm:
@@ -177,7 +177,7 @@ class Environment(object):
         #                 to_rm_tmp.append(p)
         #         self.graph[k] = [x for x in self.graph[k] if not x in to_rm_tmp]
                 
-        self.constructGraph()
+        self.constructGraph(areNeigbhoursInflated)
 
         print("End constructRiver")
 
@@ -232,7 +232,7 @@ class Environment(object):
         self.graph_rect = [x for x in self.graph_rect if not self.collideOneObstacle_Rect(x)]
         print("end split")
 
-    def constructGraph(self):
+    def constructGraph(self, neighbour_function):
         print("constructGraph")
         print("set costs")
         for r in self.graph_rect:
@@ -247,7 +247,7 @@ class Environment(object):
                 print(str(self.loading) + "% (" + str(curr) + "/" + str(tot) + ")")
 
             self.graph[r.center] = {}
-            for other in filter(lambda x :x.center != r.center and areNeigbhours(r, x), self.graph_rect):
+            for other in filter(lambda x :x.center != r.center and neighbour_function(r, x), self.graph_rect):
                 self.graph[r.center][other.center] = utils.distance2p(r.center, other.center) * self.graph_cost[other.center]
         print("constructGraph end")
 
@@ -268,7 +268,7 @@ def splitRect(rect2split, _correction=0):
 
     return [r1, r2, r3, r4]
 
-def areNeigbhours(rect1, rect2):
+def areNeigbhoursSquare(rect1, rect2):
     # return (
     #     rect1.top == rect2.top + rect2.height
     #     or rect1.top + rect1.height == rect2.top
@@ -284,5 +284,5 @@ def areNeigbhours(rect1, rect2):
 
 
 
-# def areNeigbhours(rect1, rect2):
-#     return rect1.inflate(1, 1).colliderect(rect2.inflate(1, 1))
+def areNeigbhoursInflated(rect1, rect2):
+    return rect1.inflate(1, 1).colliderect(rect2.inflate(1, 1))

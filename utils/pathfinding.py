@@ -80,7 +80,19 @@ def reconstructPath(came_from, current):
     while current in came_from.keys():
         current = came_from[current]
         total_path.append(current)
-    return total_path
 
-def computePathLength(path):
-    pass
+    return total_path #+ [total_path[-1]]
+
+def computePathLength(env, path):
+    if not path:
+        return -1
+    if len(path) == 1:
+        return 0
+    res = env.graph[path[0]][path[1]]
+    for i in range(1, len(path) - 1):
+        res = res + env.graph[path[i]][path[i+1]]
+    return res
+
+def getPathLength(env, pose1, pose2):
+    path = astar(pose1, pose2, env)
+    return computePathLength(env, path)
