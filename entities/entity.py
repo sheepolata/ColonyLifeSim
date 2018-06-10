@@ -277,38 +277,65 @@ class Ressource(Entity):
         return v
         
 class Spawner(Entity):
-    def __init__(self, env, name, spawnee):
+    def __init__(self, env, name, sp_type, period, factor):
         super(Spawner, self).__init__(env)
         self.name = name
-        self.spawnee = spawnee
+        self.sp_type = sp_type
 
-        self.period = random.randint(30, 60)
-        self.radius = 200
+        self.factor = factor
+
+        self.period = period
+        self.radius = 30
+
+        self.max_spawnee = random.randint(10, 15)
+        self.current_spawnee = 0
+
+        self.list_ressource = []
 
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
     
+    def setRandomPose(self, maxx, maxy):
+        super(Spawner, self).setRandomPose(maxx, maxy)
+        while self.env.getCurrentRect(self.getPose()) == None or self.env.collideOneObstacle_Point(self.getPose()):
+            super(Spawner, self).setRandomPose(maxx, maxy)
+
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
 
     def setSpawnerBehaviour(self):
         del self.behaviour
-        self.behaviour = behaviour.Wait(self, self.env, self.period)
+        self.behaviour = behaviour.SpawnerBehaviour(self, self.env, self.period)
+
+    def update(self):
+        for r in self.list_ressource:
+            if r.dead :
+                self.list_ressource.remove(r)
+                self.current_spawnee -= 1
+        ns = self.behaviour.nextStep()
+        if ns == 1:
+            self.spawn()
+            # print(str(self.current_spawnee) + "/" + str(self.max_spawnee))
+        super(Spawner, self).update()
 
     def spawn(self):
-        if self.name == "foodspawner":
-            res = entities.Ressource(self.env, "food", random.randint(30, 60), False)
+        if self.sp_type == "foodspawner":
+            res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(30*self.factor)), False)
 
             npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
             npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
             asser = self.env.getCurrentRect((npx, npy))
             while asser == None:
+                # print "asser false"
                 npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
                 npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
+                asser = self.env.getCurrentRect((npx, npy))
 
             res.pose.x = npx
             res.pose.y = npy
 
             res.setRegrowBehaviour()
             self.env.addRessource(res)
+            self.list_ressource.append(res)
+            self.current_spawnee += 1
         

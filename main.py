@@ -51,10 +51,12 @@ def main():
         entity.setIdleBehaviour()
         l_entities.append(entity)
 
-    for i in range(10):
-        res = entities.Ressource(env, "food", random.randint(75, 150), True)
-        res.setRegrowBehaviour()
-        env.addRessource(res)
+    l_spawner = []
+    for i in range(1):
+        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", random.randint(190, 260), random.random()*0.6 + 0.8)
+        spawnerFood.setRandomPose(width, height)
+        spawnerFood.setSpawnerBehaviour()
+        l_spawner.append(spawnerFood)
 
 
     run = True
@@ -113,6 +115,8 @@ def main():
         #play each entity
         for e in l_entities:
             e.update()
+        for r in l_spawner:
+            r.update()
         for kr in env.ressources.keys():
             for r in env.ressources[kr]:
                 r.update()
@@ -137,6 +141,8 @@ def main():
                 r.sprite.draw(screen, alpha_surface)
         for e in l_entities:
             e.sprite.draw(screen, alpha_surface, True)
+        for sp in l_spawner:
+            sp.sprite.draw(screen)
         
 
         #Display Debug

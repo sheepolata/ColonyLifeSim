@@ -117,7 +117,7 @@ class IdleBehaviour(Behaviour):
         tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
         ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
 
-        if(self.env.getCurrentRect((tx, ty)) != None 
+        if(self.env.getCurrentRect((tx, ty)) != None and self.env.getCurrentRect(self.entity.getPose()) 
             and pf.getPathLength(self.env, self.env.getCurrentRect(self.entity.getPose()).center, 
                 self.env.getCurrentRect((tx, ty)).center) <= 150
             ):
@@ -159,7 +159,7 @@ class GOTORessource(GOTOBehaviour):
         self.count = 0
 
     def nextStep(self):
-        self.count = self.count % 20
+        self.count = (self.count+1) % 20
         return super(GOTORessource, self).nextStep()
 
 class Wait(Behaviour):
@@ -178,7 +178,22 @@ class Wait(Behaviour):
         if self.clock <= 0:
             return 1
         return 0
-        
+
+class SpawnerBehaviour(Behaviour):
+    def __init__(self, entity, env, period):
+        super(SpawnerBehaviour, self).__init__(entity, env)
+        self.period = period
+        self.count = 0
+
+        self.state = "spawner"
+        self.label = "SPWN"
+
+    def nextStep(self):
+        self.count = (self.count+1) % self.period
+        if self.count == 0 and self.entity.current_spawnee < self.entity.max_spawnee:
+            return 1
+        return 0
+                        
 
 class Harvest(Behaviour):
     def __init__(self, entity, env, res):
