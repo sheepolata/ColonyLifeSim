@@ -180,7 +180,6 @@ class NPC(Entity):
 
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
-            # print self.behaviour.state
             ns = self.behaviour.nextStep()
             if ns == -1:
                 self.setIdleBehaviour()

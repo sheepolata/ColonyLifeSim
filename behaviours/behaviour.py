@@ -37,7 +37,6 @@ class Behaviour(object):
 
         self.path.append(self.entity.getPose())
 
-        # if self.env.lineCollideObstacle(self.entity.getPose(), self.target):
         path_astar = pf.astar(current_rect.center, target_rect.center , self.env)
 
         if path_astar == None :
@@ -229,13 +228,3 @@ class RegrowBehaviour(Behaviour):
     def nextStep(self):
         self.entity.regrow()
         return 1
-        
-
-
-
-        
-        
-
-
-
-

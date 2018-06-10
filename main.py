@@ -26,7 +26,10 @@ from pygame.locals import *
 
 pygame.init()
 
+
 def main():
+    DISPLAY_DEBUG = False
+
     env = Env.Environment(width, height)
 
     clock = pygame.time.Clock()
@@ -73,6 +76,8 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == K_ESCAPE :
                     run = False
+                if event.key == K_d:
+                    DISPLAY_DEBUG = not DISPLAY_DEBUG
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 #LMB
                 if event.button == 1:
@@ -88,11 +93,8 @@ def main():
                             if e.behaviour.state == "goto":
                                 e.behaviour.setSpecificTarget(mp)
                                 e.behaviour.computePath()
-
-
                             else:
                                 e.setGOTOBehaviour(mp)
-                    pass
                 #MMB
                 if event.button == 2:
                     pass
@@ -128,6 +130,15 @@ def main():
         #Remove dead entities
         l_entities = [x for x in l_entities if not x.dead]
 
+        #Display Debug
+        if DISPLAY_DEBUG:
+            for k in env.graph.keys():
+                for pos in env.graph[k]:
+                    # print env.graph[k][pos]/10
+                    pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+            for r in env.graph_rect:
+                pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+
         #Display
         #Env
         for o in env.obstacles:
@@ -147,13 +158,6 @@ def main():
             sp.sprite.draw(screen)
         
 
-        #Display Debug
-        # for k in env.graph.keys():
-        #     for pos in env.graph[k]:
-        #         # print env.graph[k][pos]/10
-        #         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
-        # for r in env.graph_rect:
-        #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         screen.blit(alpha_surface, (0, 0))
         pygame.display.flip()

@@ -46,7 +46,7 @@ def astar(_start, _goal, env):
 
         if current == None:
             print("Error : current == None")
-            sys.exit(0)
+            return []
 
         if current == _goal:
             return reconstructPath(came_from, current)

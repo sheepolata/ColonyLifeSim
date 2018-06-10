@@ -140,42 +140,11 @@ class Environment(object):
         to_rm = [x for x in self.river_path if not x in chosen]
         for r in to_rm:
             self.saved_rect_from_river.append(self.getCurrentRect(r))
-        # toadd_to_rm = []
-
-        # # for rm in to_rm:
-        # #     rect_rm = self.getCurrentRect(rm)
-        # #     for neigh in filter(lambda x :x.center != rect_rm.center and areNeigbhoursSquare(rect_rm, x), self.graph_rect):
-        # #         toadd_to_rm.append(neigh.center)
-
-        # for rm in to_rm:
-        #     # rect_rm = self.getCurrentRect(rm)
-        #     for _neighbour in self.graph[rm]:
-        #         if not _neighbour in chosen:
-        #             toadd_to_rm.append(_neighbour)
-
-        # print str(len(toadd_to_rm)) + "+" + str(len(to_rm)) + "(" + str(len(self.river_path)) + ")"
-        # to_rm.append(toadd_to_rm)
-
-        # # print to_rm
-
-        # i = 0
-        # for r in to_rm:
-        #     if r in [x.center for x in self.graph_rect]:
-        #         print i
-        #         i+= 1
 
         self.graph_rect = [x for x in self.graph_rect if not x.center in to_rm]
 
         for rm in to_rm:
             self.graph.pop(rm, None)
-
-        # for k in self.graph.keys():
-        #     for n in self.graph[k]:
-        #         to_rm_tmp = []
-        #         for p in n:
-        #             if n in to_rm:
-        #                 to_rm_tmp.append(p)
-        #         self.graph[k] = [x for x in self.graph[k] if not x in to_rm_tmp]
                 
         self.constructGraph(areNeigbhoursInflated)
 
@@ -193,7 +162,6 @@ class Environment(object):
 
         min_split_w = int(self.width*0.01)
         min_split_h = int(self.height*0.01)
-
 
         processList = []
         first = pygame.Rect((0, 0), (self.width, self.height))
