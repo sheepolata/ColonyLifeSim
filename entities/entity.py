@@ -193,7 +193,7 @@ class NPC(Entity):
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setIdleBehaviour()
             elif self.behaviour.state == "idle" and ns == 1:
-                self.setWaitBehaviour(10)
+                self.setWaitBehaviour(50)
  
         self.pose.x += self.shift_x
         self.pose.y += self.shift_y

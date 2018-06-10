@@ -112,7 +112,7 @@ class IdleBehaviour(Behaviour):
         del self.path[:]
         self.path.append(self.entity.getPose())
 
-        rdspan = 75
+        rdspan = 40
 
         tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
         ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
