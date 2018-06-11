@@ -1,0 +1,75 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "292d19385b73fabf7df86280603ced2f38ef6688dd2aafa4aefb2ff8c13587bb"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "2.7"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "numpy": {
+            "hashes": [
+                "sha256:07bd13135c267bc5c449c196c428935b0880cb43579af1d0da883e9dadc0ef64",
+                "sha256:0b1d6a4758a0f98ce7f8d1f429d97eb721dc2f4dea2586d61d1bbc604bd803a9",
+                "sha256:0f87221d407beb3a656f94a9706829b80f2864d010ca8ddebba6080893b18813",
+                "sha256:579fda18697cf978fd4f8eef573b16285887411782fd029d7d6b09bd61658279",
+                "sha256:611cd19f4ae1dc8a0388d89b2b074f14d13ab19f66881d9ba669c90aa6c874fb",
+                "sha256:7fde25785a99d22cda00ee900772e7ba2dbbd6c9384413afd1b6ebd66e90b2a4",
+                "sha256:81160e1f01fa21c2ec7a8a26ff16ec47336ee28c61540feaf5b3014d13dbdaed",
+                "sha256:9109f260850627e4b83a3c4bcef4f2f99357eb4a5eaae75dec51c32f3c197aa3",
+                "sha256:a1d1268d200816bfb9727a7a27b78d8e37ecec2e4d5ebd33eb64e2789e0db43e",
+                "sha256:b8f4afab6b8438036a99cf3384eccc7da6286c6e6077cfedb5651fd5fdcaeda0",
+                "sha256:cf49c2451905b170a32e043a2a4c323ac96c5d729713fe52c615dfcfb6816022",
+                "sha256:da21856583a1f6ed0131e2094d6e6ef1881b09860777510f979e33d8361f7379",
+                "sha256:da76d2b0e49e7c392192e7c695eabbb0309ed031980197fe3e7c74dcfcede005",
+                "sha256:dd514e914929b2ffda2626567b48e27a1da715f8fe0c868c41c928f99fa91305",
+                "sha256:e87c90be5719901ac19df861f40d8f16a9368cc68d3ede2b615c4c1524c305c8",
+                "sha256:eb503c83ca75d309a1c4a7ac62a8a6f465fbb5128d1a56a1c97c8fb1f999a22a"
+            ],
+            "index": "pypi",
+            "version": "==1.11.0"
+        },
+        "pygame": {
+            "hashes": [
+                "sha256:22d5195a72b9a300cb7e87d7bde1373930a02b1054e95bc431d26a321ae15d07",
+                "sha256:2a8292d0b5a67e0b96d2cae09bbd8252e99daffe95fd88a00166b92fb6497b40",
+                "sha256:2ee479b0120cc82f04f7c41a09d75fc85c9992ed1a26c9527fb2b7b0637e6739",
+                "sha256:4847550da37d3bc702e0201a035de005f184b19e86625a3c70ab1d318317ee91",
+                "sha256:4d4985d0e0e5470c5ef872d65a863f1722d85a136327eb3bb5dcafc2853f2e55",
+                "sha256:5cf670378c8aabdf1bdf283eeec690c93f95dfe8de77c66bc837c91274c8ca49",
+                "sha256:643de45518d11cb7784e3fe77aef43fe3cb7e0d6b495ad4361ade931f16c334b",
+                "sha256:66746c32d21d8193ab066fdf90da96ed993c4818adb13bf4eaa472f306f7f421",
+                "sha256:73c86fdbbfc5ae77d0271fb0964f4a3fc639cc2277ffeb60ee4e981fb0d27640",
+                "sha256:751021819bdc0cbe5cbd51904abb6ff9e9aee5b0e8955af02284d0e77d6c9ec2",
+                "sha256:792f8d1a455d5d1de9c8f2cc051c6dac2b90705afc4cf9fe4933aeb296b0ae3f",
+                "sha256:831c906d4a70aa58f9382e79671525805583b58ac8c895b4c4bd066e8858a1a1",
+                "sha256:834ee27388563f15e6c736aa4850e4cf95609f67056ee73ff646528bb658e79e",
+                "sha256:925e6be8e8c3f1cec016f5a68f369491ae34600e04633759e0e07780ce7bd083",
+                "sha256:96a8f61c729d82576ee3d5cfe3b0b91e7b52a4fbf3d618a3b659347eeb4fd937",
+                "sha256:97615fb075808b4709f6115e3a11a253bfac78614f430bededbc0ac76a5100af",
+                "sha256:c49ece0e4ba71be90ed4bf6a905c35e5c1a95c4c0b0b42eaff74ab69c5793847",
+                "sha256:e8626d4d4e7617ebf103d96a493b9cbe53f9b39cd46ecbff232e33ba4a082530",
+                "sha256:ea7da8dd7fbc12becccf691b4c76fbb381e369e124c30e21f9ed263b6e7e139a"
+            ],
+            "index": "pypi",
+            "version": "==1.9.3"
+        },
+        "screeninfo": {
+            "hashes": [
+                "sha256:4293c4eb5f62618971ecdce9a6c41d4878c915d1dd7dde4244b251f118823f95"
+            ],
+            "index": "pypi",
+            "version": "==0.3"
+        }
+    },
+    "develop": {}
+}
