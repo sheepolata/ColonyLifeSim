@@ -103,3 +103,13 @@ To run python, open the command prompt and run :
 ```sh
 PYTHON_INSTALL_DIR\PATH\python.exe COLONY_DIR_PATH\main.py
 ```
+
+## How it works :
+
+### Map generation :
+
+TODO
+
+### Entities and Behaviours :
+
+TODO
