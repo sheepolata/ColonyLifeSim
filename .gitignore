@@ -4,6 +4,6 @@ environment/*.pyc
 sprites/*.pyc
 utils/*.pyc
 build/*
-dist/*
+dist/main/*
 desktop.ini
 main.spec
