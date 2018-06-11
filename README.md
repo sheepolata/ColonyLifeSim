@@ -36,12 +36,12 @@ If you want to use git, you have to install it first :
 
 #### Using pipenv ([link](https://github.com/pypa/pipenv)) (recommended)
 
-Install pipenv is not installed using 
+Install pipenv is not installed, using 
 ```sh
 pip install pipenv
 ```
 
-Run 
+Run, in the project's root directory :
 ```sh
 pipenv install --dev
 ```
@@ -50,7 +50,7 @@ pipenv install --dev
 
 Install the required libs with :
 ```sh
-pip install -r requirements.tx
+pip install -r requirements.txt
 ```
 
 Required libs (see [requirements](./requirements.txt)):
@@ -95,7 +95,7 @@ PYTHON_INSTALL_DIR\PATH\python.exe -m pip install --upgrade pip
 
 #### Using pipenv (recommended)
 
-Run the following :
+Run the following, in the project's root directory:
 
 ```sh
 pipenv shell
@@ -106,7 +106,7 @@ python main.py
 
 Simply run
 `python main.py`
-in the main directory
+in the project's root directory
 
 
 ### Windows
@@ -118,6 +118,8 @@ To run python, open the command prompt and run :
 ```sh
 PYTHON_INSTALL_DIR\PATH\python.exe COLONY_DIR_PATH\main.py
 ```
+
+You may also use Python IDE, IDLE, to run the project, but as I don't use it, I can't advice you on how to use it.
 
 ## How it works
 
