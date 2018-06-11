@@ -1,6 +1,6 @@
-./behaviours/*.pyc
-./entities/*.pyc
-./environment/*.pyc
-./sprites/*.pyc
-./utils/*.pyc
+behaviours/*.pyc
+entities/*.pyc
+environment/*.pyc
+sprites/*.pyc
+utils/*.pyc
 desktop.ini
