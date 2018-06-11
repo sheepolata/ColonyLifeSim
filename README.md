@@ -10,6 +10,8 @@ TODO
 
 Download the project's source code or clone it using `git clone`.
 
+![Git download image](https://www.infragistics.com/community/cfs-filesystemfile/__key/CommunityServer.Blogs.Components.WeblogFiles/dhananjay_5F00_kumar.visualstudiogithib/0285.img3.png)
+
 To download git :
 * Windows : [here](https://git-scm.com/downloads)
 * Linux : `apt-get install git`
