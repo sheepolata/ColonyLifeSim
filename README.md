@@ -7,6 +7,7 @@ A Colony Life Simulation in python2.7 and pygame
 <!--ts-->
    * [Purpose](#purpose)
    * [Installation](#installation)
+      * [Easy Windows Installation](#easy-windows-installation)
       * [Linux](#linux)
       * [Windows](#windows)
    * [Usage](#usage)
@@ -57,6 +58,12 @@ Required libs (see [requirements](./requirements.txt)):
 * pygame (1.9.3)
 * numpy (1.11.0)
 * screeninfo (0.3)
+
+### Easy Windows Installation
+
+If you don't want to install anything execpt this application, and don't want to take part in the development, download [this zip file](/dist/appli.zip).
+
+Once downloaded, unzip the file and execute the __main.exe__ file.
 
 ### Windows
 
