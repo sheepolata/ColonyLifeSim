@@ -16,7 +16,7 @@ from screeninfo import get_monitors
 monitor = get_monitors()[0]
 
 # width, height = 860, 680
-width, height = int(monitor.width*0.65), int(monitor.height*0.65)
+width, height = int(monitor.width*0.75), int(monitor.height*0.75)
 
 import os
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(width/2),(monitor.height/2)-(height/2))
@@ -26,6 +26,7 @@ from pygame.locals import *
 
 pygame.init()
 
+#Generate zip file for ready-to-use windows app (in root directory) : C:/Python27/Scripts/pyinstaller main.py
 
 def main():
     DISPLAY_DEBUG = False
@@ -56,7 +57,7 @@ def main():
 
     l_spawner = []
     for i in range(2):
-        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", random.randint(190, 260), random.random()*0.6 + 0.8)
+        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", random.randint(560, 640), random.random()*0.6 + 0.8)
         spawnerFood.setRandomPose(width, height)
         spawnerFood.setSpawnerBehaviour()
         for i in range(3):

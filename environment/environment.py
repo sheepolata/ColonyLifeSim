@@ -1,6 +1,7 @@
 import pygame
 import math
 import random 
+import copy
 
 import numpy as np
 
@@ -65,6 +66,9 @@ class Environment(object):
     def collideOneObstacle_Point(self, point):
         for o in self.obstacles:
             if o.sprite.rect.collidepoint(point):
+                return True
+        for oriver in self.saved_rect_from_river:
+            if oriver.collidepoint(point):
                 return True
         return False
 
@@ -139,7 +143,7 @@ class Environment(object):
 
         to_rm = [x for x in self.river_path if not x in chosen]
         for r in to_rm:
-            self.saved_rect_from_river.append(self.getCurrentRect(r))
+            self.saved_rect_from_river.append(copy.copy(self.getCurrentRect(r)))
 
         self.graph_rect = [x for x in self.graph_rect if not x.center in to_rm]
 
@@ -151,10 +155,10 @@ class Environment(object):
         print("End constructRiver")
 
     def getCurrentRect(self, point):
-        for r in self.graph_rect:
-            if r.collidepoint(point):
-                return r
-        return None
+            for r in self.graph_rect:
+                if r.collidepoint(point):
+                    return r
+            return None
 
     def splitEnvironment(self):
         print("split")

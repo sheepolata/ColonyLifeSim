@@ -78,9 +78,9 @@ class NPC(Entity):
         self._ticker.start()
 
     def tick(self):
-        if self._tick%25 == 0:
+        if self._tick%50 == 0:
 
-            self.hunger += round((random.random() * 1.25) + 0.25, 2)
+            self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
 
@@ -188,7 +188,7 @@ class NPC(Entity):
             elif self.behaviour.state == "gotoressource" and ns == 1:
                 self.setHarvestBehaviour(self.target_res)
             elif self.behaviour.state == "harvest" and ns == 1:
-                self.setWaitBehaviour(20)
+                self.setWaitBehaviour(35)
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setIdleBehaviour()
             elif self.behaviour.state == "idle" and ns == 1:
