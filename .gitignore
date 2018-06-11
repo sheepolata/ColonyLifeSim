@@ -3,4 +3,7 @@ entities/*.pyc
 environment/*.pyc
 sprites/*.pyc
 utils/*.pyc
+build/*
+dist/*
 desktop.ini
+main.spec
