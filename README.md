@@ -13,7 +13,7 @@ TODO
 Install the required libs with :
 `pip install -r requirements.tx`
 
-Required libs :
+Required libs (see [requirements](./requirements.txt):
 * pygame (1.9.3)
 * numpy (1.11.0)
 * screeninfo (0.3)
