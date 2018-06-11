@@ -7,7 +7,7 @@ A Colony Life Simulation in python2.7 and pygame
 <!--ts-->
    * [Purpose](#purpose)
    * [Installation](#installation)
-      * [Easy Windows Installation](easy-windows-installation)
+      * [Easy Windows Installation](#easy-windows-installation)
       * [Linux](#linux)
       * [Windows](#windows)
    * [Usage](#usage)
