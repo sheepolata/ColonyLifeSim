@@ -42,11 +42,16 @@ Install the .msi (or .exe) file.
 
 #### Other libs :
 
-For __Numpy__ and __screeninfo__, use the pip installer like this :
+Open the Windows command prompt (cmd).
 
-`PYTHON_INSTALL_DIR\PATH\python.exe -m pip install [my_lib]`
+For __Numpy__ and __screeninfo__, use the pip installer :
 
-You might have to update your pip before by doing :
+```sh
+PYTHON_INSTALL_DIR\PATH\python.exe -m pip install numpy
+PYTHON_INSTALL_DIR\PATH\python.exe -m pip install screeninfo
+```
+
+You might have to update your pip before hand, by doing :
 
 `PYTHON_INSTALL_DIR\PATH\python.exe -m pip install --upgrade pip`
 
@@ -71,7 +76,7 @@ python main.py
 
 ### Windows :
 
-Locate the Python2.7 installation directory. 
+Locate the Python2.7 installation directory (usually in C:/Python27). 
 
 To run python, open the command prompt and run :
 
