@@ -2,6 +2,21 @@
 
 A Colony Life Simulation in python2.7 and pygame
 
+## Table of contents
+
+<!--ts-->
+   * [Purpose](#purpose)
+   * [Installation](#installation)
+      * [Linux](#linux)
+      * [Windows](#windows)
+   * [Usage](#usage)
+      * [Linux](#linux)
+      * [Windows](#windows)
+   * [How it works](#how-it-works)
+      * [Map Generation](#map-generation)
+      * [Entities and Behaviours](#entities-and-behaviours)
+<!--te-->
+
 ## Purpose:
 
 TODO
