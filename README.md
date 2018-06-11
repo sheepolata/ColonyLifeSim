@@ -10,6 +10,8 @@ TODO
 
 ### Linux :
 
+#### Classic :
+
 Install the required libs with :
 `pip install -r requirements.tx`
 
@@ -17,6 +19,12 @@ Required libs (see [requirements](./requirements.txt)):
 * pygame (1.9.3)
 * numpy (1.11.0)
 * screeninfo (0.3)
+
+#### Using pipenv ([link](https://github.com/pypa/pipenv)):
+
+Install pipenv is not installed using `pip install pipenv`
+
+Run `pipenv install --dev`
 
 ### Windows :
 
@@ -46,9 +54,18 @@ You might have to update your pip before by doing :
 
 ### Linux :
 
+#### Classic :
+
 Simply run
 `python main.py`
 in the main directory
+
+#### Using pipenv :
+
+Run the following :
+
+`pipenv shell 
+python main.py`
 
 ### Windows :
 
