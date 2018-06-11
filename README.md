@@ -17,11 +17,11 @@ A Colony Life Simulation in python2.7 and pygame
       * [Entities and Behaviours](#entities-and-behaviours)
 <!--te-->
 
-## Purpose:
+## Purpose
 
 TODO
 
-## Installation :
+## Installation
 
 Download the project's source code :
 
@@ -32,9 +32,9 @@ If you want to use git, you have to install it first :
 * Windows : download it [here](https://git-scm.com/downloads)
 * Linux : use `apt-get install git`
 
-### Linux :
+### Linux
 
-#### Using pipenv ([link](https://github.com/pypa/pipenv)) (recommended):
+#### Using pipenv ([link](https://github.com/pypa/pipenv)) (recommended)
 
 Install pipenv is not installed using 
 ```sh
@@ -46,7 +46,7 @@ Run
 pipenv install --dev
 ```
 
-#### Classic :
+#### Classic
 
 Install the required libs with :
 ```sh
@@ -58,21 +58,21 @@ Required libs (see [requirements](./requirements.txt)):
 * numpy (1.11.0)
 * screeninfo (0.3)
 
-### Windows :
+### Windows
 
-#### Python :
+#### Python
 
 Download Python2.7 from this [link](https://www.python.org/download/releases/2.7/).
 
 Install Python2.7 by executing the .exe file.
 
-#### Pygame :
+#### Pygame
 
 Download the pygame installer corresponding to Python 2.7 and your OS version from [here](https://www.pygame.org/download.shtml).
 
 Install the .msi (or .exe) file.
 
-#### Other libs :
+#### Other libs
 
 Open the Windows command prompt (cmd).
 
@@ -89,11 +89,11 @@ You might have to update your pip before hand, by doing :
 PYTHON_INSTALL_DIR\PATH\python.exe -m pip install --upgrade pip
 ```
 
-## Usage :
+## Usage
 
-### Linux :
+### Linux
 
-#### Using pipenv (recommended):
+#### Using pipenv (recommended)
 
 Run the following :
 
@@ -102,14 +102,14 @@ pipenv shell
 python main.py
 ```
 
-#### Classic :
+#### Classic
 
 Simply run
 `python main.py`
 in the main directory
 
 
-### Windows :
+### Windows
 
 Locate the Python2.7 installation directory (usually in C:/Python27). 
 
@@ -119,12 +119,12 @@ To run python, open the command prompt and run :
 PYTHON_INSTALL_DIR\PATH\python.exe COLONY_DIR_PATH\main.py
 ```
 
-## How it works :
+## How it works
 
-### Map generation :
+### Map generation
 
 TODO
 
-### Entities and Behaviours :
+### Entities and Behaviours
 
 TODO
