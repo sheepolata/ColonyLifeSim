@@ -8,6 +8,12 @@ TODO
 
 ## Installation :
 
+Download the project's source code or clone it using `git clone`.
+
+To download git :
+* Windows : [here](https://git-scm.com/downloads)
+* Linux : `apt-get install git`
+
 ### Linux :
 
 #### Classic :
