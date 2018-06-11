@@ -64,8 +64,10 @@ in the main directory
 
 Run the following :
 
-`pipenv shell 
-python main.py`
+```sh
+pipenv shell
+python main.py
+```
 
 ### Windows :
 
