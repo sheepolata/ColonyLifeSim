@@ -17,8 +17,9 @@ class Environment(object):
         self.obstacles = []
         self.ressources = {}
 
-        self.min_tile_w = int(self.width*0.05)
-        self.min_tile_h = int(self.height*0.05)
+        self.min_tile_w = int(self.width*0.1)
+        self.min_tile_h = int(self.height*0.1)
+
         self.graph_rect = []
         self.graph = {}
         self.graph_cost = {}

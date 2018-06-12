@@ -137,7 +137,7 @@ class NPC(Entity):
 
     def setRandomPose(self, maxx, maxy):
         super(NPC, self).setRandomPose(maxx, maxy)
-        while self.env.collideOneObstacle_Point(self.getPose()) or self.env.getCurrentRect(self.getPose()) == None:
+        while self.env.collideOneObstacle_Point(self.getPose()):
             super(NPC, self).setRandomPose(maxx, maxy)
             
 

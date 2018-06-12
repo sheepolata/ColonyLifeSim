@@ -29,12 +29,14 @@ from numpy import ones,vstack
 from numpy.linalg import lstsq
 
 def computeLineEquation(p1, p2):
-    points = [p1,p2]
+    if p1 == p2:
+        return None, None
+    points = [(float(p1[0]), float(p1[1])),(float(p2[0]), float(p2[1]))]
     x_coords, y_coords = zip(*points)
     A = vstack([x_coords,ones(len(x_coords))]).T
-    m, c = lstsq(A, y_coords,rcond=None)[0]
+    m, c = lstsq(A, y_coords,rcond=-1)[0]
     #y = m*x + c
-    return [m, c]
+    return m, c
 
 # Calc the gradient 'm' of a line between p1 and p2
 def calculateGradient(p1, p2):
