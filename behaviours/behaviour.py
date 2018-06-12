@@ -13,6 +13,8 @@ class Behaviour(object):
 
         self.path = []
         self.ipath = 0
+        self.ipath_prev = -1
+        self.k = 0
 
         self.state = "nothing"
         self.label = "NAN"
@@ -79,23 +81,28 @@ class Behaviour(object):
         if self.ipath >= len(self.path):
             return 1
 
+
+
         self.target = self.path[self.ipath]
 
 
         if utils.near(self.entity.getPose(), self.target, _thresh=self.entity.speed + 1):
+            self.ipath_prev = self.ipath
             self.ipath += 1
             self.entity.shift_x = 0
             self.entity.shift_y = 0
             if self.ipath >= len(self.path):
                 self.ipath = 0
+                self.ipath_prev = -1
                 del self.path[:]
             return 0
 
         p1 = self.entity.getPose()
         p2 = self.target
 
-        k = float(self.entity.speed) / float(utils.distance2p(p1, p2))
-        new_p = ( k * p2[0] + (1-k)*p1[0] , k * p2[1] + (1-k)*p1[1] )
+        if self.ipath_prev != self.ipath:
+            self.k = float(self.entity.speed) / float(utils.distance2p(p1, p2))
+        new_p = ( self.k * p2[0] + (1-self.k)*p1[0] , self.k * p2[1] + (1-self.k)*p1[1] )
 
         self.entity.shift_x = new_p[0] - self.entity.pose.x
         self.entity.shift_y = new_p[1] - self.entity.pose.y

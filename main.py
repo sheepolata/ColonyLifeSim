@@ -56,7 +56,7 @@ def main():
         l_entities.append(entity)
 
     l_spawner = []
-    for i in range(2):
+    for i in range(10):
         spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", random.randint(560, 640), random.random()*0.6 + 0.8)
         spawnerFood.setRandomPose(width, height)
         spawnerFood.setSpawnerBehaviour()
