@@ -30,21 +30,43 @@ class Behaviour(object):
         target_rect = self.env.getCurrentRect(_target)
         trial = 0
         if target_rect == None:
-            # print("Error, no self.target rect found")
             return
 
         self.target = _target
 
         self.path.append(self.entity.getPose())
 
-        path_astar = pf.astar(current_rect.center, target_rect.center , self.env)
+        #if line from entity.pos to target is OK, do not compute astar
+            #y = a*x + b => a==0 : parallele; a==inf : perpendicular; a == (-)1 : (-)45deg
+        a, b = geo.computeLineEquation(current_rect.center, target_rect.center)
+        astar_needed = False
+        if abs(current_rect.center[0] - target_rect.center[0]) > abs(current_rect.center[1] - target_rect.center[1]):
+            mini = min(current_rect.center[0], target_rect.center[0])
+            maxi = max(current_rect.center[0], target_rect.center[0])
 
-        if path_astar == None :
-            print("Error, no path found")
-            return
-        # path_astar = path_astar[:-1]
-        for p in reversed(path_astar):
-            self.path.append(p)
+            for step_x in range(mini, maxi, 15):
+                y = a*step_x + b
+                if self.env.collideOneObstacle_Point((step_x, y)):
+                    astar_needed = True
+        else:
+            mini = min(current_rect.center[1], target_rect.center[1])
+            maxi = max(current_rect.center[1], target_rect.center[1])
+
+            for step_y in range(mini, maxi, 15):
+                # y = a*step_x + b
+                x = (step_y - b)/a
+                if self.env.collideOneObstacle_Point((x, step_y)):
+                    astar_needed = True
+
+        #else compute astar
+        if astar_needed:
+            path_astar = pf.astar(current_rect.center, target_rect.center , self.env)
+
+            if path_astar == None :
+                print("Error, no path found")
+                return
+            for p in reversed(path_astar):
+                self.path.append(p)
 
         self.path.append(self.target)
 
@@ -118,7 +140,7 @@ class IdleBehaviour(Behaviour):
 
         if(self.env.getCurrentRect((tx, ty)) != None and self.env.getCurrentRect(self.entity.getPose()) 
             and pf.getPathLength(self.env, self.env.getCurrentRect(self.entity.getPose()).center, 
-                self.env.getCurrentRect((tx, ty)).center) <= 150
+                self.env.getCurrentRect((tx, ty)).center) <= 175
             ):
             _target = (tx, ty)
 
@@ -140,12 +162,19 @@ class GOTOBehaviour(Behaviour):
         self.state = "goto"
         self.label = "GT"
 
+        self.count = 0
+
     def setSpecificTarget(self, st):
         self.specific_target = st
 
     def computePath(self):
         del self.path[:]
         super(GOTOBehaviour, self).computePath(self.specific_target)
+
+    def nextStep(self):
+        self.count = (self.count+1) % 100
+        return super(GOTOBehaviour, self).nextStep()
+
 
 class GOTORessource(GOTOBehaviour):
     def __init__(self, entity, env, ressource):
@@ -155,10 +184,7 @@ class GOTORessource(GOTOBehaviour):
         self.state = "gotoressource"
         self.label = "GTR"
 
-        self.count = 0
-
     def nextStep(self):
-        self.count = (self.count+1) % 20
         return super(GOTORessource, self).nextStep()
 
 class Wait(Behaviour):
@@ -186,6 +212,9 @@ class SpawnerBehaviour(Behaviour):
 
         self.state = "spawner"
         self.label = "SPWN"
+
+    def computePath(self):
+        return
 
     def nextStep(self):
         self.count = (self.count+1) % self.period

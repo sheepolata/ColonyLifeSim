@@ -1,0 +1,9 @@
+behaviours/*.pyc
+entities/*.pyc
+environment/*.pyc
+sprites/*.pyc
+utils/*.pyc
+build/*
+dist/main/*
+desktop.ini
+main.spec
