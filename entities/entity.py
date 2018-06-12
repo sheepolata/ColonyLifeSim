@@ -227,6 +227,8 @@ class Ressource(Entity):
         super(Ressource, self).__init__(env)
         self.name = name
 
+        self.used = False
+
         self.max_value = round(value*2.5, 2)
         if rep:
             self.value = value
@@ -234,7 +236,7 @@ class Ressource(Entity):
             self.value = self.max_value
 
         self.replenishable = rep
-        self.replen_rate = round(random.random()*0.15 + 0.33, 2)
+        self.replen_rate = round(random.random()*0.45 + 0.33, 2)
         self.harvestable = True
 
         randpose = self.env.getRandomValidPose()
@@ -257,7 +259,7 @@ class Ressource(Entity):
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
             ns = self.behaviour.nextStep()
             if self.behaviour.state == "regrow" and ns == 1:
-                self.setWaitBehaviour(20)
+                self.setWaitBehaviour(50)
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setRegrowBehaviour()
         super(Ressource, self).update()
@@ -289,7 +291,7 @@ class Spawner(Entity):
         self.period = period
         self.radius = 30
 
-        self.max_spawnee = random.randint(10, 15)
+        self.max_spawnee = random.randint(8, 12)
         self.current_spawnee = 0
 
         self.list_ressource = []
