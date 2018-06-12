@@ -93,43 +93,11 @@ class Behaviour(object):
         p1 = self.entity.getPose()
         p2 = self.target
 
-        # a, b = geo.computeLineEquation(p1, p2)
-
-        # if a == None or b == None:
-        #     if self.entity.pose.x > self.target[0]:
-        #         self.entity.shift_x = -self.entity.speed
-        #     if self.entity.pose.x < self.target[0]:
-        #         self.entity.shift_x = self.entity.speed
-        #     if self.entity.pose.x == self.target[0]:
-        #         self.entity.shift_x = 0
-
-        #     if self.entity.pose.y > self.target[1]:
-        #         self.entity.shift_y = -self.entity.speed
-        #     if self.entity.pose.y < self.target[1]:
-        #         self.entity.shift_y = self.entity.speed
-        #     if self.entity.pose.y == self.target[1]:
-        #         self.entity.shift_y = 0
-        # else:
-
         k = float(self.entity.speed) / float(utils.distance2p(p1, p2))
         new_p = ( k * p2[0] + (1-k)*p1[0] , k * p2[1] + (1-k)*p1[1] )
 
         self.entity.shift_x = new_p[0] - self.entity.pose.x
         self.entity.shift_y = new_p[1] - self.entity.pose.y
-
-        # if self.entity.pose.x > self.target[0]:
-        #     self.entity.shift_x = -self.entity.speed
-        # if self.entity.pose.x < self.target[0]:
-        #     self.entity.shift_x = self.entity.speed
-        # if self.entity.pose.x == self.target[0]:
-        #     self.entity.shift_x = 0
-
-        # if self.entity.pose.y > self.target[1]:
-        #     self.entity.shift_y = -self.entity.speed
-        # if self.entity.pose.y < self.target[1]:
-        #     self.entity.shift_y = self.entity.speed
-        # if self.entity.pose.y == self.target[1]:
-        #     self.entity.shift_y = 0
 
         return 0
 
