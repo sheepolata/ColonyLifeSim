@@ -4,6 +4,8 @@ import utils.utils as utils
 import utils.geometry as geo
 import utils.pathfinding as pf
 
+import time
+
 class Behaviour(object):
     def __init__(self, entity, env):
         super(Behaviour, self).__init__()
@@ -178,7 +180,7 @@ class GOTOBehaviour(Behaviour):
         return super(GOTOBehaviour, self).computePath(self.specific_target)
 
     def nextStep(self):
-        self.count = (self.count+1) % 100
+        self.count = (self.count+1) % 150
         return super(GOTOBehaviour, self).nextStep()
 
 
@@ -189,6 +191,9 @@ class GOTORessource(GOTOBehaviour):
 
         self.state = "gotoressource"
         self.label = "GTR"
+
+    def computePath(self):
+        return super(GOTORessource, self).computePath()
 
     def nextStep(self):
         return super(GOTORessource, self).nextStep()
@@ -243,7 +248,7 @@ class Harvest(Behaviour):
         return 1
 
     def nextStep(self):
-        if self.res == None or not utils.near(self.entity.getPose(), self.res.getPose(), _thresh=15):
+        if self.res == None:
             return -1
 
         self.entity.collectRessource(self.res)

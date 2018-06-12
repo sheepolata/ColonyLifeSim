@@ -2,7 +2,9 @@ import utils.utils as utils
 import utils.basic_colors as basic_colors
 import behaviours.behaviour as behaviour
 import random
-import sprites.sprite 
+import sprites.sprite
+
+import time 
 
 import pygame
 
@@ -66,7 +68,7 @@ class NPC(Entity):
         self.hunger_max = self.hunger_thresh + 50
         self.have_to_eat = False
 
-        self.harvester = random.random()*0.5 + 0.75
+        self.harvester = random.random()*1.5 + 2.0
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
@@ -79,7 +81,6 @@ class NPC(Entity):
 
     def tick(self):
         if self._tick%50 == 0:
-
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
@@ -92,7 +93,7 @@ class NPC(Entity):
         if not res.name in self.bagpack.keys():
             self.bagpack[res.name] = 0
 
-        self.bagpack[res.name] = res.getSome(self, 5)
+        self.bagpack[res.name] = res.getSome(self, random.random()*0.1 + 0.95)
 
     def haveFood(self):
         return "food" in self.bagpack.keys() and self.bagpack["food"] > 0
@@ -161,25 +162,24 @@ class NPC(Entity):
         if self.hungry():
             self.have_to_eat = True
 
-        if self.have_to_eat:
+        if self.have_to_eat and self.behaviour.state != "wait":
             if self.haveFood():
                 self.consumeFood()
             else:
-                target_res_tmp = self.env.getClosestRessource(self.getPose(), "food")
-                if target_res_tmp == None:
-                    if self.behaviour.state != "idle":
-                        self.setIdleBehaviour()
-                elif self.behaviour.state != "wait":
-                    if self.behaviour.state == "gotoressource" and self.behaviour.count == 0:
-                        if target_res_tmp != self.target_res:
+                if self.target_res != None:
+                    if utils.near(self.getPose(), self.target_res.getPose(), _thresh=35):
+                        self.setHarvestBehaviour(self.target_res)
+                    elif self.behaviour.state == "gotoressource" and self.behaviour.count == 0:
+                        target_res_tmp = self.env.getClosestRessource(self.getPose(), "food")
+                        if target_res_tmp != None and target_res_tmp != self.target_res:
                             self.target_res = target_res_tmp
                             self.setGOTORessource(self.target_res)
-                    if self.behaviour.state != "gotoressource" and self.behaviour.state != "harvest":
-                        self.target_res = target_res_tmp
-                        if utils.near(self.getPose(), self.target_res.getPose(), _thresh=15):
-                            self.setHarvestBehaviour(self.target_res)
-                        else:
-                            self.setGOTORessource(self.target_res)
+                else:
+                    self.target_res = self.env.getClosestRessource(self.getPose(), "food")
+                    if self.target_res != None:
+                        self.setGOTORessource(self.target_res)
+        else:
+            self.target_res = None
 
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
@@ -191,7 +191,7 @@ class NPC(Entity):
             elif self.behaviour.state == "gotoressource" and ns == 1:
                 self.setHarvestBehaviour(self.target_res)
             elif self.behaviour.state == "harvest" and ns == 1:
-                self.setWaitBehaviour(35)
+                self.setWaitBehaviour(20)
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setIdleBehaviour()
             elif self.behaviour.state == "idle" and ns == 1:
@@ -281,7 +281,7 @@ class Ressource(Entity):
         return v
         
 class Spawner(Entity):
-    def __init__(self, env, name, sp_type, period, factor):
+    def __init__(self, env, name, sp_type, maxs, period, factor, rep):
         super(Spawner, self).__init__(env)
         self.name = name
         self.sp_type = sp_type
@@ -289,10 +289,12 @@ class Spawner(Entity):
         self.factor = factor
 
         self.period = period
-        self.radius = 30
+        self.radius = 25
 
-        self.max_spawnee = random.randint(8, 12)
+        self.max_spawnee = maxs
         self.current_spawnee = 0
+
+        self.replenishable = rep
 
         self.list_ressource = []
 
@@ -324,7 +326,10 @@ class Spawner(Entity):
 
     def spawn(self):
         if self.sp_type == "foodspawner":
-            res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(30*self.factor)), False)
+            if not self.replenishable:
+                res = Ressource(self.env, "food", random.randint(int(25*self.factor), int(50*self.factor)), False)
+            else:
+                res = Ressource(self.env, "food", random.randint(int(50*self.factor), int(75*self.factor)), True)
 
             npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
             npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
