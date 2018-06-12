@@ -40,7 +40,9 @@ class Behaviour(object):
             #y = a*x + b => a==0 : parallele; a==inf : perpendicular; a == (-)1 : (-)45deg
         a, b = geo.computeLineEquation(current_rect.center, target_rect.center)
         astar_needed = False
-        if abs(current_rect.center[0] - target_rect.center[0]) > abs(current_rect.center[1] - target_rect.center[1]):
+        if a == None or b == None:
+            astar_needed = True
+        elif abs(current_rect.center[0] - target_rect.center[0]) > abs(current_rect.center[1] - target_rect.center[1]):
             mini = min(current_rect.center[0], target_rect.center[0])
             maxi = max(current_rect.center[0], target_rect.center[0])
 
@@ -88,6 +90,43 @@ class Behaviour(object):
                 del self.path[:]
             return 0
 
+        p1 = self.entity.getPose()
+        p2 = self.target
+
+        a, b = geo.computeLineEquation(p1, p2)
+
+        # if a == None or b == None:
+        #     if self.entity.pose.x > self.target[0]:
+        #         self.entity.shift_x = -self.entity.speed
+        #     if self.entity.pose.x < self.target[0]:
+        #         self.entity.shift_x = self.entity.speed
+        #     if self.entity.pose.x == self.target[0]:
+        #         self.entity.shift_x = 0
+
+        #     if self.entity.pose.y > self.target[1]:
+        #         self.entity.shift_y = -self.entity.speed
+        #     if self.entity.pose.y < self.target[1]:
+        #         self.entity.shift_y = self.entity.speed
+        #     if self.entity.pose.y == self.target[1]:
+        #         self.entity.shift_y = 0
+        # elif abs(p1[0] - p2[0]) > abs(p1[1] - p2[1]):
+        #     if self.entity.pose.x > self.target[0]:
+        #         self.entity.shift_x = -self.entity.speed
+        #     if self.entity.pose.x < self.target[0]:
+        #         self.entity.shift_x = self.entity.speed
+        #     if self.entity.pose.x == self.target[0]:
+        #         self.entity.shift_x = 0
+
+        #     self.entity.shift_y = a * (self.entity.shift_x) + b
+        # else:
+        #     if self.entity.pose.y > self.target[1]:
+        #         self.entity.shift_y = -self.entity.speed
+        #     if self.entity.pose.y < self.target[1]:
+        #         self.entity.shift_y = self.entity.speed
+        #     if self.entity.pose.y == self.target[1]:
+        #         self.entity.shift_y = 0
+
+        #     self.entity.shift_x = (self.entity.shift_y - b)/a
 
         if self.entity.pose.x > self.target[0]:
             self.entity.shift_x = -self.entity.speed
@@ -138,9 +177,11 @@ class IdleBehaviour(Behaviour):
         tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
         ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
 
-        if(self.env.getCurrentRect((tx, ty)) != None and self.env.getCurrentRect(self.entity.getPose()) 
-            and pf.getPathLength(self.env, self.env.getCurrentRect(self.entity.getPose()).center, 
-                self.env.getCurrentRect((tx, ty)).center) <= 175
+        rect_temp = self.env.getCurrentRect((tx, ty))
+        rect_ent_temp = self.env.getCurrentRect(self.entity.getPose())
+        if(rect_temp != None and rect_ent_temp 
+            and pf.getPathLength(self.env, rect_ent_temp.center, 
+                rect_temp.center) <= 175
             ):
             _target = (tx, ty)
 
