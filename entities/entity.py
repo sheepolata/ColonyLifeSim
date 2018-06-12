@@ -107,32 +107,35 @@ class NPC(Entity):
             self.have_to_eat = False
 
     def setIdleBehaviour(self):
-        del self.behaviour
+        if self.behaviour!= None and self.behaviour.state == "idle":
+            return
+        self.behaviour = None
         self.behaviour = behaviour.IdleBehaviour(self, self.env)
         self.behaviour.computePath()
 
     def setGOTOBehaviour(self, st):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.GOTOBehaviour(self, self.env, st)
-        self.behaviour.computePath()
+        cp = self.behaviour.computePath()
+
 
     def setGOTORessource(self, res):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.GOTORessource(self, self.env, res)
-        self.behaviour.computePath()
+        cp = self.behaviour.computePath()
 
     def setHarvestBehaviour(self, res):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.Harvest(self, self.env, res)
         self.behaviour.computePath()
 
     def setWaitBehaviour(self, time):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.Wait(self, self.env, time)
         self.behaviour.computePath()
 
     def setEmptyBehaviour(self):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.EmptyBehaviour(self, self.env)
 
     def setRandomPose(self, maxx, maxy):
@@ -243,7 +246,7 @@ class Ressource(Entity):
         self.behaviour = behaviour.RegrowBehaviour(self, self.env)
 
     def setWaitBehaviour(self, time):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.Wait(self, self.env, time)
 
     def setPose(self, x, y):
@@ -303,7 +306,7 @@ class Spawner(Entity):
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
 
     def setSpawnerBehaviour(self):
-        del self.behaviour
+        self.behaviour = None
         self.behaviour = behaviour.SpawnerBehaviour(self, self.env, self.period)
 
     def update(self):

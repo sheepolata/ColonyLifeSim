@@ -66,11 +66,12 @@ class Behaviour(object):
 
             if path_astar == None :
                 print("Error, no path found")
-                return
+                return -1
             for p in reversed(path_astar):
                 self.path.append(p)
 
         self.path.append(self.target)
+        return 1
 
     def nextStep(self):
         if not self.path:
@@ -110,7 +111,7 @@ class EmptyBehaviour(Behaviour):
         self.state = "empty"
         self.label = "EMP"
     def computePath(self):
-        pass
+        return 1
 
     def nextStep(self):
         return 1
@@ -142,9 +143,9 @@ class IdleBehaviour(Behaviour):
             ):
             _target = (tx, ty)
 
-            super(IdleBehaviour, self).computePath(_target)
+            return super(IdleBehaviour, self).computePath(_target)
         else: 
-            return
+            return -1
 
     def nextStep(self):
         ns = super(IdleBehaviour, self).nextStep()
@@ -167,7 +168,7 @@ class GOTOBehaviour(Behaviour):
 
     def computePath(self):
         del self.path[:]
-        super(GOTOBehaviour, self).computePath(self.specific_target)
+        return super(GOTOBehaviour, self).computePath(self.specific_target)
 
     def nextStep(self):
         self.count = (self.count+1) % 100
@@ -194,7 +195,7 @@ class Wait(Behaviour):
         self.label = "W"
 
     def computePath(self):
-        return
+        return 1
 
     def nextStep(self):
         self.clock -= 1
@@ -212,7 +213,7 @@ class SpawnerBehaviour(Behaviour):
         self.label = "SPWN"
 
     def computePath(self):
-        return
+        return 1
 
     def nextStep(self):
         self.count = (self.count+1) % self.period
@@ -232,7 +233,7 @@ class Harvest(Behaviour):
         self.label = "HAR"
 
     def computePath(self):
-        return
+        return 1
 
     def nextStep(self):
         if self.res == None or not utils.near(self.entity.getPose(), self.res.getPose(), _thresh=15):
@@ -250,7 +251,7 @@ class RegrowBehaviour(Behaviour):
         self.label = "REG"
 
     def computePath(self):
-        return
+        return 1
 
     def nextStep(self):
         self.entity.regrow()

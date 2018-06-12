@@ -45,7 +45,12 @@ class Environment(object):
         mini = float("inf")
         ok = None
         for cand in [x for x in self.ressources[resname] if x.harvestable]:
-            dist = utils.distance2p(pose, cand.getPose())
+            # dist = utils.distance2p(pose, cand.getPose())
+            if self.getCurrentRect(pose) == None or self.getCurrentRect(cand.getPose()) == None:
+                continue
+            dist = pf.getPathLength(self, self.getCurrentRect(pose).center, self.getCurrentRect(cand.getPose()).center)
+            if dist == -1:
+                continue
             if dist <= mini:
                 ok = cand
                 mini = dist
