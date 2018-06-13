@@ -43,6 +43,9 @@ class SelectionRect:
     def collidepoint(self, point):
         return pygame.Rect(self.rect).collidepoint(point)
 
+    def colliderect(self, rect):
+        return pygame.Rect(self.rect).colliderect(rect)
+
     def hide(self,screen):
         """ hide(self,screen)
         This hides the selection rectangle using the stored background

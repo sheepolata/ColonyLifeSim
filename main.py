@@ -94,7 +94,11 @@ def main():
     selection_on = False
     selection_rect = None
 
+    paused = False
+
     while run:
+
+
         t1 = time.time()
 
         # clock.tick(60) #tick at 60fps
@@ -126,6 +130,8 @@ def main():
                     run = False
                 if event.key == K_d:
                     DISPLAY_DEBUG = not DISPLAY_DEBUG
+                if event.key == K_SPACE:
+                    paused = not paused
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 #LMB
                 if event.button == 1:
@@ -148,10 +154,10 @@ def main():
                         if rect != None:
                             for e in selected:
                                 rect_e = env.getCurrentRect(e.getPose())
-                                if rect_e != None:
-                                    print pf.getPathLength(env, rect.center, rect_e.center)
-                                else:
-                                    print "error rect entity not found"
+                                # if rect_e != None:
+                                #     print pf.getPathLength(env, rect.center, rect_e.center)
+                                # else:
+                                #     print "error rect entity not found"
                                 if e.behaviour.state == "goto":
                                     e.behaviour.setSpecificTarget(mp)
                                     e.behaviour.computePath()
@@ -183,7 +189,7 @@ def main():
 
                         selected = []
                         for e in l_npc:
-                            if selection_rect.collidepoint(e.getPose()):
+                            if selection_rect.colliderect(e.sprite.rect):
                                 selected.append(e)
 
                         selection_rect = None
@@ -192,22 +198,24 @@ def main():
 
         t_other = time.time() - t_other
 
-        #Logic
-        #play each entity
         t_update = time.time()
-        for e in l_npc:
-            #slow as fuck
-            e.update()
-        for r in l_spawner:
-            r.update()
-        for kr in env.ressources.keys():
-            for r in env.ressources[kr]:
+        if not paused:
+            #Logic
+            #play each entity
+            for e in l_npc:
+                #slow as fuck
+                e.update()
+            for r in l_spawner:
                 r.update()
-            env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
-        t_update = time.time() - t_update
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.update()
+                env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
 
-        #Remove dead entities
-        l_npc = [x for x in l_npc if not x.dead]
+            #Remove dead entities
+            l_npc = [x for x in l_npc if not x.dead]
+
+        t_update = time.time() - t_update
 
         #Display Debug
 
@@ -261,7 +269,9 @@ def main():
         fontsize = int(info_surface_height*0.02)
         font = pygame.font.SysFont('Sans', fontsize)
 
-        text = str(round(np.mean(q_time))) + " fps / 1 frame : " +  str(round(diff_t, 3)) + "s"
+        text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
+        if paused:
+            text += " PAUSED"
         text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
         text3 = "Selected Entities :"
         displ_text = font.render(text, True, basic_colors.BLACK)
