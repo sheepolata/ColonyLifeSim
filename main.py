@@ -6,6 +6,7 @@ import behaviours.behaviour as behaviour
 import utils.pathfinding as pf
 import utils.utils as utils
 import utils.basic_colors as basic_colors
+import utils.selectionrect as select_rect
 
 import pygame
 import random
@@ -89,6 +90,10 @@ def main():
 
     q_time = []
 
+    selected = []
+    selection_on = False
+    selection_rect = None
+
     while run:
         t1 = time.time()
 
@@ -124,35 +129,40 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 #LMB
                 if event.button == 1:
-                    rect = env.getCurrentRect(mp)
-                    if rect != None:
-                        for e in l_npc:
-                            rect_e = env.getCurrentRect(e.getPose())
-                            if rect_e != None:
-                                print pf.getPathLength(env, rect.center, rect_e.center)
-                            else:
-                                print "error rect entity not found"
-                            if e.behaviour.state == "goto":
-                                e.behaviour.setSpecificTarget(mp)
-                                e.behaviour.computePath()
-                            else:
-                                e.setGOTOBehaviour(mp)
                     if quit_button.collidepoint(mp):
                         run = False
                         color_quit_button = basic_colors.RED_3
-                    if rect_button.collidepoint(mp):
+                    elif rect_button.collidepoint(mp):
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
+
+                    if alpha_surface.get_rect().collidepoint(mp) and not selection_on:
+                        selection_on = True
+                        selection_rect = select_rect.SelectionRect(alpha_surface, event.pos)
                 #MMB
                 if event.button == 2:
                     pass
                 #RMB
                 if event.button == 3:
-                    rect = env.collideOneObstacle_Point(mp)
-                    if rect != None:
-                        res = entities.Ressource(env, "food", random.randint(30, 70), False)
-                        res.setPose(mp[0], mp[1])
-                        res.setRegrowBehaviour()
-                        env.addRessource(res)
+                    if selected:
+                        rect = env.getCurrentRect(mp)
+                        if rect != None:
+                            for e in selected:
+                                rect_e = env.getCurrentRect(e.getPose())
+                                if rect_e != None:
+                                    print pf.getPathLength(env, rect.center, rect_e.center)
+                                else:
+                                    print "error rect entity not found"
+                                if e.behaviour.state == "goto":
+                                    e.behaviour.setSpecificTarget(mp)
+                                    e.behaviour.computePath()
+                                else:
+                                    e.setGOTOBehaviour(mp)
+                    # rect = env.collideOneObstacle_Point(mp)
+                    # if rect != None:
+                    #     res = entities.Ressource(env, "food", random.randint(30, 70), False)
+                    #     res.setPose(mp[0], mp[1])
+                    #     res.setRegrowBehaviour()
+                    #     env.addRessource(res)
                     pass
                 #Mouth Wheel up
                 if event.button == 4:
@@ -160,9 +170,27 @@ def main():
                 #Mouth Wheel down
                 if event.button == 5:
                     pass
+            elif event.type == MOUSEMOTION:
+                if selection_on:
+                    # update the selection rectangle while the mouse is moving
+                    selection_rect.updateRect(event.pos)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                #LMB
+                if event.button == 1:
+                    if selection_on:
+                        selection_on = False
+                        selection_rect.updateRect(event.pos)
+
+                        selected = []
+                        for e in l_npc:
+                            if selection_rect.collidepoint(e.getPose()):
+                                selected.append(e)
+
+                        selection_rect = None
+                        print [x.name for x in selected]
+                        # print "Final selection rectangle:",selection_rect
 
         t_other = time.time() - t_other
-
 
         #Logic
         #play each entity
@@ -182,6 +210,9 @@ def main():
         l_npc = [x for x in l_npc if not x.dead]
 
         #Display Debug
+
+        t_display = time.time()
+
         if DISPLAY_DEBUG:
             for k in env.graph.keys():
                 for pos in env.graph[k]:
@@ -191,7 +222,7 @@ def main():
                 pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         #Display
-        t_display = time.time()
+
         #Env
         for o in env.obstacles:
             o.sprite.draw(screen)
@@ -206,9 +237,15 @@ def main():
                 r.sprite.draw(screen, alpha_surface)
         for e in l_npc:
             e.sprite.draw(screen, alpha_surface, True)
+            if e in selected:
+                e.sprite.drawSelected(screen, basic_colors.RED)
         for sp in l_spawner:
             sp.sprite.draw(screen)
         
+        if selection_rect != None and hasattr(selection_rect, "rect"):
+            # print selection_rect.rect
+            selection_rect.draw(alpha_surface)
+
         t_display = time.time() - t_display
 
 

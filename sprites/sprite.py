@@ -16,7 +16,7 @@ class SpriteEntityBase(object):
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, self.rect.center, self.size)
 
-    def update(self, pose):
+    def update(self, pose): 
         self.pose = pose
         self.rect = pygame.Rect(pose.x-(self.size/2), pose.y-(self.size/2), self.size, self.size)
 
@@ -57,6 +57,10 @@ class SpriteNPC(SpriteEntityBase):
                 arr = self.npc.behaviour.path[p]
                 # arr = self.npc.behaviour.target
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, dep, arr)
+
+    def drawSelected(self, screen, color):
+        pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
+
 
 
 class SpriteRessource(SpriteEntityBase):
