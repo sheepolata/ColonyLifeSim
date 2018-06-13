@@ -64,14 +64,14 @@ def main():
 
 
     l_npc = []
-    for i in range(100):
+    for i in range(10):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
         l_npc.append(entity)
 
     l_spawner = []
-    for i in range(6):
+    for i in range(2):
         spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
