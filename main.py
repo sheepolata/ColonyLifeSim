@@ -58,19 +58,19 @@ def main():
     env.constructRiver(5)
 
 
-    l_entities = []
+    l_npc = []
     for i in range(10):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
-        l_entities.append(entity)
+        l_npc.append(entity)
 
     l_spawner = []
     for i in range(2):
-        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", random.randint(560, 640), random.random()*0.6 + 0.8)
+        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
-        for i in range(3):
+        for i in range(1):
             spawnerFood.spawn()
         l_spawner.append(spawnerFood)
 
@@ -93,6 +93,8 @@ def main():
         t1 = time.time()
 
         # clock.tick(60) #tick at 60fps
+
+        t_other = time.time()
 
         screen.fill(basic_colors.GREEN)
         alpha_surface.fill(basic_colors.EMPTY)
@@ -124,7 +126,7 @@ def main():
                 if event.button == 1:
                     rect = env.getCurrentRect(mp)
                     if rect != None:
-                        for e in l_entities:
+                        for e in l_npc:
                             rect_e = env.getCurrentRect(e.getPose())
                             if rect_e != None:
                                 print pf.getPathLength(env, rect.center, rect_e.center)
@@ -159,9 +161,14 @@ def main():
                 if event.button == 5:
                     pass
 
+        t_other = time.time() - t_other
+
+
         #Logic
         #play each entity
-        for e in l_entities:
+        t_update = time.time()
+        for e in l_npc:
+            #slow as fuck
             e.update()
         for r in l_spawner:
             r.update()
@@ -169,10 +176,10 @@ def main():
             for r in env.ressources[kr]:
                 r.update()
             env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
-                
+        t_update = time.time() - t_update
 
         #Remove dead entities
-        l_entities = [x for x in l_entities if not x.dead]
+        l_npc = [x for x in l_npc if not x.dead]
 
         #Display Debug
         if DISPLAY_DEBUG:
@@ -184,6 +191,7 @@ def main():
                 pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         #Display
+        t_display = time.time()
         #Env
         for o in env.obstacles:
             o.sprite.draw(screen)
@@ -196,11 +204,13 @@ def main():
         for kr in env.ressources.keys():
             for r in env.ressources[kr]:
                 r.sprite.draw(screen, alpha_surface)
-        for e in l_entities:
+        for e in l_npc:
             e.sprite.draw(screen, alpha_surface, True)
         for sp in l_spawner:
             sp.sprite.draw(screen)
         
+        t_display = time.time() - t_display
+
 
         #Info surface
         t2 = time.time()
@@ -208,13 +218,16 @@ def main():
 
         fps = round(1.0 / diff_t, 0)
         q_time.append(round(fps))
-        if len(q_time) >= 200 : q_time = q_time[1:]
+        if len(q_time) >= 75 : q_time = q_time[1:]
 
         #info text
-        text = "1 frame : " +  str(round(diff_t, 3)) + "s / " + str(round(np.mean(q_time))) + " fps"
+        text = str(round(np.mean(q_time))) + " fps / 1 frame : " +  str(round(diff_t, 3)) + "s"
+        text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
         font = pygame.font.SysFont('Sans', int(info_surface_height*0.02))
         displ_text = font.render(text, True, basic_colors.BLACK)
+        displ_text2 = font.render(text2, True, basic_colors.BLACK)
         info_surface.blit(displ_text, (10, 10))
+        info_surface.blit(displ_text2, (10, 10 + int(info_surface_height*0.02)))
 
         #buttons
         font = pygame.font.SysFont('Sans', int(info_surface_height*0.021))
@@ -237,7 +250,7 @@ def main():
 
         pygame.display.flip()
 
-    for e in l_entities:
+    for e in l_npc:
         e.die()
         e.update()
 

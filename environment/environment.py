@@ -44,7 +44,7 @@ class Environment(object):
         # result = self.ressources[resname][0]
         mini = float("inf")
         ok = None
-        for cand in [x for x in self.ressources[resname] if x.harvestable]:
+        for cand in [x for x in self.ressources[resname] if (x.harvestable and not x.used)]:
             # dist = utils.distance2p(pose, cand.getPose())
             if self.getCurrentRect(pose) == None or self.getCurrentRect(cand.getPose()) == None:
                 continue
