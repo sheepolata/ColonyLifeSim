@@ -28,13 +28,15 @@ class Behaviour(object):
         current_rect = self.env.getCurrentRect(self.entity.getPose())
         if current_rect == None:
             # print("Error, no current rect found")
-            self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
-            return
+            while current_rect == None:
+                self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
+                current_rect = self.env.getCurrentRect(self.entity.getPose())
+            # return -1
 
         target_rect = self.env.getCurrentRect(_target)
         trial = 0
         if target_rect == None:
-            return
+            return -1
 
         self.target = _target
 
