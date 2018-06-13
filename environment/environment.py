@@ -39,22 +39,26 @@ class Environment(object):
 
     def getClosestRessource(self, pose, resname):
         if not resname in self.ressources.keys() or not self.ressources[resname]:
-            return None
+            return None, None
         
         # result = self.ressources[resname][0]
         mini = float("inf")
         ok = None
+        rect_ok = None
         for cand in [x for x in self.ressources[resname] if (x.harvestable and not x.used)]:
             # dist = utils.distance2p(pose, cand.getPose())
-            if self.getCurrentRect(pose) == None or self.getCurrentRect(cand.getPose()) == None:
+            cand_rect = self.getCurrentRect(cand.getPose())
+            current_pose = self.getCurrentRect(pose)
+            if current_pose == None or cand_rect == None:
                 continue
-            dist = pf.getPathLength(self, self.getCurrentRect(pose).center, self.getCurrentRect(cand.getPose()).center)
+            dist = pf.getPathLength(self, current_pose.center, cand_rect.center)
             if dist == -1:
                 continue
             if dist <= mini:
                 ok = cand
+                rect_ok = cand_rect
                 mini = dist
-        return ok
+        return ok, rect_ok
 
     def getRandomValidPose(self):
         mini = 0

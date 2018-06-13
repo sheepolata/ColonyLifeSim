@@ -59,6 +59,8 @@ class NPC(Entity):
 
         self.target_res = None
 
+        self.selected = False
+
         #Inventory
         self.bagpack = {}
 
@@ -68,7 +70,7 @@ class NPC(Entity):
         self.hunger_max = self.hunger_thresh + 50
         self.have_to_eat = False
 
-        self.harvester = random.random()*1.5 + 2.0
+        self.harvester = random.random()*0.8 + 0.4
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
@@ -80,6 +82,9 @@ class NPC(Entity):
         self._ticker.start()
 
     def tick(self):
+        if self.hunger <= 0:
+            self.have_to_eat = False
+
         if self._tick%50 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
@@ -93,7 +98,10 @@ class NPC(Entity):
         if not res.name in self.bagpack.keys():
             self.bagpack[res.name] = 0
 
-        self.bagpack[res.name] = res.getSome(self, random.random()*0.1 + 0.95)
+        v = res.getSome(random.randint(25, 45)) 
+        self.bagpack[res.name] = round(v * self.harvester, 2)
+        # print("collect", v * self.harvester)
+        return round(10*v) #Time to wait
 
     def haveFood(self):
         return "food" in self.bagpack.keys() and self.bagpack["food"] > 0
@@ -105,7 +113,6 @@ class NPC(Entity):
             self.bagpack["food"] -= consume
         if self.hunger <= 0:
             self.hunger = 0
-            self.have_to_eat = False
 
     def setIdleBehaviour(self):
         if self.behaviour!= None and self.behaviour.state == "idle":
@@ -144,6 +151,9 @@ class NPC(Entity):
         while self.env.collideOneObstacle_Point(self.getPose()):
             super(NPC, self).setRandomPose(maxx, maxy)
             
+    def setCollectFoodBehaviour(self):
+        self.behaviour = None
+        self.behaviour = behaviour.CollectFood(self, self.env)
 
     def drawDebugCollision(self, surface):
         super(NPC, self).drawDebugCollision(surface)
@@ -158,44 +168,38 @@ class NPC(Entity):
 
         if self.dead:
             return
-
         if self.hungry():
             self.have_to_eat = True
 
-        if self.have_to_eat and self.behaviour.state != "wait":
+        if self.have_to_eat:
+            # print self.behaviour.label
+
+            # if self.selected:
+            #     print self.name + " have to eat"
+
             if self.haveFood():
                 self.consumeFood()
-            else:
-                if self.target_res != None:
-                    if utils.near(self.getPose(), self.target_res.getPose(), _thresh=35):
-                        self.setHarvestBehaviour(self.target_res)
-                    elif self.behaviour.state == "gotoressource" and self.behaviour.count == 0:
-                        target_res_tmp = self.env.getClosestRessource(self.getPose(), "food")
-                        if target_res_tmp != None and target_res_tmp != self.target_res:
-                            self.target_res = target_res_tmp
-                            self.setGOTORessource(self.target_res)
-                else:
-                    self.target_res = self.env.getClosestRessource(self.getPose(), "food")
-                    if self.target_res != None:
-                        self.setGOTORessource(self.target_res)
-        else:
-            self.target_res = None
+            elif self.behaviour.label != "COFO":
+                res, _tar_res = self.env.getClosestRessource(self.getPose(), "food")
+                if res != None:
+                    self.setCollectFoodBehaviour()
 
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
             ns = self.behaviour.nextStep()
+            # print ns
             if ns == -1:
                 self.setIdleBehaviour()
             elif self.behaviour.state == "goto" and ns == 1:
                 self.setIdleBehaviour()
-            elif self.behaviour.state == "gotoressource" and ns == 1:
-                self.setHarvestBehaviour(self.target_res)
-            elif self.behaviour.state == "harvest" and ns == 1:
-                self.setWaitBehaviour(20)
+            elif self.behaviour.label == "COFO" and ns == 1:
+                self.setIdleBehaviour()
             elif self.behaviour.state == "wait" and ns == 1:
                 self.setIdleBehaviour()
             elif self.behaviour.state == "idle" and ns == 1:
                 self.setWaitBehaviour(50)
+        else:
+            self.setIdleBehaviour()
  
         self.pose.x += self.shift_x
         self.pose.y += self.shift_y
@@ -245,23 +249,15 @@ class Ressource(Entity):
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
         
     def setRegrowBehaviour(self):
-        self.behaviour = behaviour.RegrowBehaviour(self, self.env)
-
-    def setWaitBehaviour(self, time):
-        self.behaviour = None
-        self.behaviour = behaviour.Wait(self, self.env, time)
+        self.behaviour = behaviour.RegrowBehaviour(self, self.env, 50)
 
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
 
     def update(self):
-        if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
+        if self.behaviour != None:
             ns = self.behaviour.nextStep()
-            if self.behaviour.state == "regrow" and ns == 1:
-                self.setWaitBehaviour(50)
-            elif self.behaviour.state == "wait" and ns == 1:
-                self.setRegrowBehaviour()
         super(Ressource, self).update()
 
     def regrow(self):
@@ -272,8 +268,8 @@ class Ressource(Entity):
         elif self.value <= 0:
             self.die()
 
-    def getSome(self, npc, factor):
-        v = round(factor * npc.harvester, 2) 
+    def getSome(self, factor):
+        v = round(factor, 2) 
         v = v if self.value >= v else self.value
         self.value -= v
         if self.value <= 0:
