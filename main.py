@@ -13,6 +13,7 @@ import random
 import sys
 import time
 import numpy as np
+import copy
 
 
 from screeninfo import get_monitors
@@ -46,8 +47,11 @@ def main():
     window = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("Colony Life Sim")
 
+    topleft_screen = (0, 0)
     screen = pygame.Surface((main_surface_width, main_surface_height))
+    topleft_alpha_surface = topleft_screen
     alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
+    topleft_info = (topleft_screen[0]+main_surface_width, 0)
     info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
     
     for i in range(10):
@@ -60,7 +64,7 @@ def main():
 
 
     l_npc = []
-    for i in range(10):
+    for i in range(100):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
@@ -85,9 +89,11 @@ def main():
     color_quit_button = basic_colors.RED
     quit_button = pygame.Rect((main_surface_width + info_surface_width*0.65, main_surface_height*0.94), 
                                 (info_surface_width*0.25, info_surface_height*0.05))
+
+    color_pause_button = basic_colors.OLIVE
+    pause_button = pygame.Rect((main_surface_width + info_surface_width*0.35, main_surface_height*0.94), 
+                                (info_surface_width*0.25, info_surface_height*0.05))
     
-
-
     q_time = []
 
     selected = []
@@ -96,9 +102,11 @@ def main():
 
     paused = False
 
+    shift_list_ent_span = 8
+    shift_list_ent_inf = 0
+    shift_list_ent_sup = shift_list_ent_span
+
     while run:
-
-
         t1 = time.time()
 
         # clock.tick(60) #tick at 60fps
@@ -123,15 +131,33 @@ def main():
         else:
             color_rect_button = basic_colors.BLUE
 
+        if pause_button.collidepoint(mp):
+            color_pause_button = basic_colors.OLIVE_3
+        elif paused:
+            color_pause_button = basic_colors.OLIVE_2
+        else:
+            color_pause_button = basic_colors.OLIVE
+
         #Single event control
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == K_ESCAPE :
                     run = False
-                if event.key == K_d:
+                elif event.key == K_d:
                     DISPLAY_DEBUG = not DISPLAY_DEBUG
-                if event.key == K_SPACE:
+                elif event.key == K_SPACE:
                     paused = not paused
+                elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    selected = l_npc
+                    shift_list_ent_inf = 0
+                    shift_list_ent_sup = shift_list_ent_span
+                elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    selected = copy.copy(l_npc)
+                    np.random.shuffle(selected)
+                    selected = selected[:8]
+
+                    shift_list_ent_inf = 0
+                    shift_list_ent_sup = shift_list_ent_span
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 #LMB
                 if event.button == 1:
@@ -140,8 +166,10 @@ def main():
                         color_quit_button = basic_colors.RED_3
                     elif rect_button.collidepoint(mp):
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
+                    elif pause_button.collidepoint(mp):
+                        paused = not paused
 
-                    if alpha_surface.get_rect().collidepoint(mp) and not selection_on:
+                    if alpha_surface.get_rect(topleft=topleft_alpha_surface).collidepoint(mp) and not selection_on:
                         selection_on = True
                         selection_rect = select_rect.SelectionRect(alpha_surface, event.pos)
                 #MMB
@@ -154,28 +182,21 @@ def main():
                         if rect != None:
                             for e in selected:
                                 rect_e = env.getCurrentRect(e.getPose())
-                                # if rect_e != None:
-                                #     print pf.getPathLength(env, rect.center, rect_e.center)
-                                # else:
-                                #     print "error rect entity not found"
                                 if e.behaviour.state == "goto":
                                     e.behaviour.setSpecificTarget(mp)
                                     e.behaviour.computePath()
                                 else:
                                     e.setGOTOBehaviour(mp)
-                    # rect = env.collideOneObstacle_Point(mp)
-                    # if rect != None:
-                    #     res = entities.Ressource(env, "food", random.randint(30, 70), False)
-                    #     res.setPose(mp[0], mp[1])
-                    #     res.setRegrowBehaviour()
-                    #     env.addRessource(res)
-                    pass
                 #Mouth Wheel up
                 if event.button == 4:
-                    pass
+                    if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
+                        shift_list_ent_inf = shift_list_ent_inf-1 if shift_list_ent_inf>0 else 0
+                        shift_list_ent_sup = shift_list_ent_sup-1 if shift_list_ent_sup>shift_list_ent_span else shift_list_ent_span
                 #Mouth Wheel down
                 if event.button == 5:
-                    pass
+                    if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
+                        shift_list_ent_inf = shift_list_ent_inf+1 if shift_list_ent_inf<(len(selected)-shift_list_ent_span) else len(selected)-shift_list_ent_span
+                        shift_list_ent_sup = shift_list_ent_sup+1 if shift_list_ent_sup<len(selected) else len(selected)
             elif event.type == MOUSEMOTION:
                 if selection_on:
                     # update the selection rectangle while the mouse is moving
@@ -191,10 +212,11 @@ def main():
                         for e in l_npc:
                             if selection_rect.colliderect(e.sprite.rect):
                                 selected.append(e)
+                        shift_list_ent_inf = 0
+                        shift_list_ent_sup = shift_list_ent_span
 
                         selection_rect = None
-                        print [x.name for x in selected]
-                        # print "Final selection rectangle:",selection_rect
+                        # print [x.name for x in selected]
 
         t_other = time.time() - t_other
 
@@ -273,7 +295,7 @@ def main():
         if paused:
             text += " PAUSED"
         text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
-        text3 = "Selected Entities :"
+        text3 = "Selected Entities (" + str(len(selected)) + ") :"
         displ_text = font.render(text, True, basic_colors.BLACK)
         displ_text2 = font.render(text2, True, basic_colors.BLACK)
         displ_text3 = font.render(text3, True, basic_colors.BLACK)
@@ -284,7 +306,16 @@ def main():
         info_surface.blit(displ_text3, (10, 20 + shift))
         shift = 20 + shift
 
-        for e in selected:
+
+        # print (shift_list_ent_inf, shift_list_ent_sup)
+
+        if shift_list_ent_inf > 0:
+            txt_dotdotdot = "..."
+            displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
+            info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
+            shift = shift + fontsize + 2
+
+        for e in selected[shift_list_ent_inf:shift_list_ent_sup]:
             txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
             displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
@@ -308,14 +339,22 @@ def main():
                 info_surface.blit(displ_txt_bp, (10, shift + fontsize))
                 shift = shift + fontsize
 
+        if shift_list_ent_sup < len(selected):
+            txt_dotdotdot = "..."
+            displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
+            info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
+            shift = shift + fontsize + 2
+
 
         #buttons
         fontsize = int(info_surface_height*0.02)
         font = pygame.font.SysFont('Sans', fontsize)
 
-        quit_text = font.render("Quit (Esc)", True, basic_colors.BLACK)
+        quit_text   = font.render("Quit (Esc)", True, basic_colors.BLACK)
 
-        rect_text = font.render("Rect (d)", True, basic_colors.BLACK)
+        rect_text   = font.render("Rect (D)", True, basic_colors.BLACK)
+
+        rect_paused = font.render("Pause (Spc)", True, basic_colors.BLACK)
 
         #Blit and Flip surfaces
         window.blit(screen, (0, 0))
@@ -324,11 +363,15 @@ def main():
 
         pygame.draw.rect(window, color_quit_button, quit_button)
         window.blit(quit_text, (quit_button.center[0] - (quit_text.get_width()/2), 
-            quit_button.center[1] - (quit_text.get_height()/2)))
+            quit_button.center[1] - (quit_text.get_height()/2) ) )
 
         pygame.draw.rect(window, color_rect_button, rect_button)
         window.blit(rect_text, (rect_button.center[0] - (rect_text.get_width()/2), 
-            rect_button.center[1] - (rect_text.get_height()/2)))
+            rect_button.center[1] - (rect_text.get_height()/2) ))
+
+        pygame.draw.rect(window, color_pause_button, pause_button)
+        window.blit(rect_paused, (pause_button.center[0] - (rect_paused.get_width()/2), 
+            pause_button.center[1] - (rect_paused.get_height()/2) ) )
 
         pygame.display.flip()
 
