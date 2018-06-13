@@ -41,7 +41,7 @@ class SpriteNPC(SpriteEntityBase):
         super(SpriteNPC, self).__init__(color, pose)
         self.npc = npc
 
-    def draw(self, screen, line_surface, line=False):
+    def draw(self, screen):
         super(SpriteNPC, self).draw(screen)
 
         text = str(self.npc.hunger)
@@ -49,17 +49,16 @@ class SpriteNPC(SpriteEntityBase):
         displ_text = font.render(text, True, basic_colors.BLACK)
         screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
+    def drawSelected(self, screen, line_surface, color):
+        pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
 
-        if line and self.npc.behaviour != None:
+        if self.npc.behaviour != None:
             for p in range(1, len(self.npc.behaviour.path)):
                 dep = self.npc.behaviour.path[p-1]
                 # dep = self.npc.getPose()
                 arr = self.npc.behaviour.path[p]
                 # arr = self.npc.behaviour.target
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, dep, arr)
-
-    def drawSelected(self, screen, color):
-        pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
 
 
 

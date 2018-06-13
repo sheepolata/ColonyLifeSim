@@ -236,9 +236,9 @@ def main():
             for r in env.ressources[kr]:
                 r.sprite.draw(screen, alpha_surface)
         for e in l_npc:
-            e.sprite.draw(screen, alpha_surface, True)
+            e.sprite.draw(screen)
             if e in selected:
-                e.sprite.drawSelected(screen, basic_colors.RED)
+                e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
         for sp in l_spawner:
             sp.sprite.draw(screen)
         
@@ -258,16 +258,51 @@ def main():
         if len(q_time) >= 75 : q_time = q_time[1:]
 
         #info text
+        fontsize = int(info_surface_height*0.02)
+        font = pygame.font.SysFont('Sans', fontsize)
+
         text = str(round(np.mean(q_time))) + " fps / 1 frame : " +  str(round(diff_t, 3)) + "s"
         text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
-        font = pygame.font.SysFont('Sans', int(info_surface_height*0.02))
+        text3 = "Selected Entities :"
         displ_text = font.render(text, True, basic_colors.BLACK)
         displ_text2 = font.render(text2, True, basic_colors.BLACK)
+        displ_text3 = font.render(text3, True, basic_colors.BLACK)
         info_surface.blit(displ_text, (10, 10))
-        info_surface.blit(displ_text2, (10, 10 + int(info_surface_height*0.02)))
+        shift = 10
+        info_surface.blit(displ_text2, (10, 10 + shift))
+        shift = 10 + shift
+        info_surface.blit(displ_text3, (10, 20 + shift))
+        shift = 20 + shift
+
+        for e in selected:
+            txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
+            displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
+
+            txt_hunger = "     hunger : " + str(e.hunger) + "/" + str(e.hunger_max) + " (" + str(e.hunger_thresh) + ")"
+            displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
+
+            txt_behaviour = "     state : " + e.behaviour.state
+            displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
+
+            info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
+            shift = shift + fontsize + 2
+            info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
+            shift = shift + fontsize
+            info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
+            shift = shift + fontsize
+
+            for k in e.bagpack:
+                txt_bagpack = "          " + k + " : " + str(round(e.bagpack[k], 2))
+                displ_txt_bp = font.render(txt_bagpack, True, basic_colors.BLACK)
+
+                info_surface.blit(displ_txt_bp, (10, shift + fontsize))
+                shift = shift + fontsize
+
 
         #buttons
-        font = pygame.font.SysFont('Sans', int(info_surface_height*0.021))
+        fontsize = int(info_surface_height*0.02)
+        font = pygame.font.SysFont('Sans', fontsize)
+
         quit_text = font.render("Quit (Esc)", True, basic_colors.BLACK)
 
         rect_text = font.render("Rect (d)", True, basic_colors.BLACK)
