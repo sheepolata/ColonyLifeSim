@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
 from __future__ import print_function
 
 import entities.entity as entities
@@ -25,7 +28,7 @@ from pygame.locals import *
 #Generate zip file for ready-to-use windows app (in root directory) : C:/Python27/Scripts/pyinstaller main.py
 
 
-def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False):
+def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
 
     tinit = time.time()
 
@@ -52,7 +55,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     if DISPLAY:
         window = pygame.display.set_mode((screen_width, screen_height))
-        pygame.display.set_caption("Colony Life Sim")
+        caption = "Colony Life Simulation" + ("" if not PROFIL else " : Profiler n° {0}/{1}".format(number+1, max_number))
+        pygame.display.set_caption(caption)
 
         topleft_screen = (0, 0)
         screen = pygame.Surface((main_surface_width, main_surface_height))
@@ -115,7 +119,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     paused = False
     info = False
 
-    shift_list_ent_span = 8
+    shift_list_ent_span = 4
     shift_list_ent_inf = 0
     shift_list_ent_sup = shift_list_ent_span
 
@@ -177,95 +181,96 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
         #Single event control
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == K_ESCAPE :
-                    run = False
-                elif event.key == K_d:
-                    DISPLAY_DEBUG = not DISPLAY_DEBUG
-                elif event.key == K_i:
-                    info = not info
-                elif event.key == K_SPACE:
-                    paused = not paused
-                elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                    for e in l_npc:
-                        e.selected_npc = True
-                    selected_npc = l_npc
-                    shift_list_ent_inf = 0
-                    shift_list_ent_sup = shift_list_ent_span
-                elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                    for e in l_npc:
-                        e.selected_npc = True
-                    selected_npc = copy.copy(l_npc)
-                    np.random.shuffle(selected_npc)
-                    selected_npc = selected_npc[:8]
-
-                    shift_list_ent_inf = 0
-                    shift_list_ent_sup = shift_list_ent_span
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                #LMB
-                if event.button == 1:
-                    if quit_button.collidepoint(mp):
+        if not PROFIL:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == K_ESCAPE :
                         run = False
-                        color_quit_button = basic_colors.RED_3
-                    elif rect_button.collidepoint(mp):
+                    elif event.key == K_d:
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
-                    elif pause_button.collidepoint(mp):
-                        paused = not paused
-                    elif info_button.collidepoint(mp):
+                    elif event.key == K_i:
                         info = not info
-
-                    if alpha_surface.get_rect(topleft=topleft_alpha_surface).collidepoint(mp) and not selection_on:
-                        selection_on = True
-                        selection_rect = select_rect.SelectionRect(alpha_surface, event.pos)
-                #MMB
-                if event.button == 2:
-                    pass
-                #RMB
-                if event.button == 3:
-                    if selected_npc:
-                        rect = env.getCurrentRect(mp)
-                        if rect != None:
-                            for e in selected_npc:
-                                rect_e = env.getCurrentRect(e.getPose())
-                                if e.behaviour.state == "goto":
-                                    e.behaviour.setSpecificTarget(mp)
-                                    e.behaviour.computePath()
-                                else:
-                                    e.setGOTOBehaviour(mp)
-                #Mouth Wheel up
-                if event.button == 4:
-                    if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
-                        shift_list_ent_inf = shift_list_ent_inf-1 if shift_list_ent_inf>0 else 0
-                        shift_list_ent_sup = shift_list_ent_sup-1 if shift_list_ent_sup>shift_list_ent_span else shift_list_ent_span
-                #Mouth Wheel down
-                if event.button == 5:
-                    if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
-                        shift_list_ent_inf = shift_list_ent_inf+1 if shift_list_ent_inf<(len(selected_npc)-shift_list_ent_span) else len(selected_npc)-shift_list_ent_span
-                        shift_list_ent_sup = shift_list_ent_sup+1 if shift_list_ent_sup<len(selected_npc) else len(selected_npc)
-            elif event.type == MOUSEMOTION:
-                if selection_on:
-                    # update the selection rectangle while the mouse is moving
-                    selection_rect.updateRect(event.pos)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                #LMB
-                if event.button == 1:
-                    if selection_on:
-                        selection_on = False
-                        selection_rect.updateRect(event.pos)
-
-                        for e in selected_npc:
-                            e.selected_npc = False
-                        selected_npc = []
+                    elif event.key == K_SPACE:
+                        paused = not paused
+                    elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for e in l_npc:
-                            if selection_rect.colliderect(e.sprite.rect):
-                                e.selected_npc = True
-                                selected_npc.append(e)
+                            e.selected_npc = True
+                        selected_npc = l_npc
                         shift_list_ent_inf = 0
                         shift_list_ent_sup = shift_list_ent_span
+                    elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        for e in l_npc:
+                            e.selected_npc = True
+                        selected_npc = copy.copy(l_npc)
+                        np.random.shuffle(selected_npc)
+                        selected_npc = selected_npc[:shift_list_ent_span]
 
-                        selection_rect = None
-                        # print [x.name for x in selected_npc]
+                        shift_list_ent_inf = 0
+                        shift_list_ent_sup = shift_list_ent_span
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    #LMB
+                    if event.button == 1:
+                        if quit_button.collidepoint(mp):
+                            run = False
+                            color_quit_button = basic_colors.RED_3
+                        elif rect_button.collidepoint(mp):
+                            DISPLAY_DEBUG = not DISPLAY_DEBUG
+                        elif pause_button.collidepoint(mp):
+                            paused = not paused
+                        elif info_button.collidepoint(mp):
+                            info = not info
+
+                        if alpha_surface.get_rect(topleft=topleft_alpha_surface).collidepoint(mp) and not selection_on:
+                            selection_on = True
+                            selection_rect = select_rect.SelectionRect(alpha_surface, event.pos)
+                    #MMB
+                    if event.button == 2:
+                        pass
+                    #RMB
+                    if event.button == 3:
+                        if selected_npc:
+                            rect = env.getCurrentRect(mp)
+                            if rect != None:
+                                for e in selected_npc:
+                                    rect_e = env.getCurrentRect(e.getPose())
+                                    if e.behaviour.state == "goto":
+                                        e.behaviour.setSpecificTarget(mp)
+                                        e.behaviour.computePath()
+                                    else:
+                                        e.setGOTOBehaviour(mp)
+                    #Mouth Wheel up
+                    if event.button == 4:
+                        if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
+                            shift_list_ent_inf = shift_list_ent_inf-1 if shift_list_ent_inf>0 else 0
+                            shift_list_ent_sup = shift_list_ent_sup-1 if shift_list_ent_sup>shift_list_ent_span else shift_list_ent_span
+                    #Mouth Wheel down
+                    if event.button == 5:
+                        if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
+                            shift_list_ent_inf = shift_list_ent_inf+1 if shift_list_ent_inf<(len(selected_npc)-shift_list_ent_span) else len(selected_npc)-shift_list_ent_span
+                            shift_list_ent_sup = shift_list_ent_sup+1 if shift_list_ent_sup<len(selected_npc) else len(selected_npc)
+                elif event.type == MOUSEMOTION:
+                    if selection_on:
+                        # update the selection rectangle while the mouse is moving
+                        selection_rect.updateRect(event.pos)
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    #LMB
+                    if event.button == 1:
+                        if selection_on:
+                            selection_on = False
+                            selection_rect.updateRect(event.pos)
+
+                            for e in selected_npc:
+                                e.selected_npc = False
+                            selected_npc = []
+                            for e in l_npc:
+                                if selection_rect.colliderect(e.sprite.rect):
+                                    e.selected_npc = True
+                                    selected_npc.append(e)
+                            shift_list_ent_inf = 0
+                            shift_list_ent_sup = shift_list_ent_span
+
+                            selection_rect = None
+                            # print [x.name for x in selected_npc]
 
         t_other = time.time() - t_other
 
@@ -329,7 +334,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
             for sp in l_spawner:
-                sp.sprite.draw(screen, False)
+                sp.sprite.draw(screen, info)
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
@@ -383,6 +388,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
                 displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
+                txt_stat1 = "     speed : " + str(e.speed)
+                displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
+
                 txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
@@ -391,6 +399,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
                 shift = shift + fontsize + 2
+                info_surface.blit(displ_txt_stat1, (10, shift + fontsize))
+                shift = shift + fontsize
                 info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
                 shift = shift + fontsize
                 info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
@@ -465,4 +475,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=100, nb_obs=15, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=15, nb_spawner=3, _profiler=-1, DISPLAY=True, debug_displ=False)

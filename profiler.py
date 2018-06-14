@@ -81,6 +81,50 @@ def writeRes(file, args={}):
     file.write("\n")
 
 
+def printRes(args={}):
+    mean_total = np.mean(pc.get("TIME_TOTAL"))
+    mini_total = min(pc.get("TIME_TOTAL"))
+    maxi_total = max(pc.get("TIME_TOTAL"))
+
+    mean_logic = np.mean(pc.get("TIME_LOGIC"))
+    mini_logic = min(pc.get("TIME_LOGIC"))
+    maxi_logic = max(pc.get("TIME_LOGIC"))
+
+    mean_display = np.mean(pc.get("TIME_DISPLAY"))
+    mini_display = min(pc.get("TIME_DISPLAY"))
+    maxi_display = max(pc.get("TIME_DISPLAY"))
+
+    if args:
+        stri = "==== PARAMETERS ====\n"
+        for k in args.keys():
+            stri +=  k + " = " + str(args[k]) + ";"
+        print( stri[:-1] + "\n")
+
+    print("\n===== RESULTS =====\n")
+    print("========== NPC DATA\n")
+    print("Number of survivors = " + str(pc.get("NB_NPC")[-1]) + "\n")
+    print("Mean NPC number = " + str(np.mean(pc.get("NB_NPC"))) + "\n")
+    print("List NPC count = " + str(pc.get("NB_NPC")) + "\n")
+    print("\n")
+    print("======== TIME LOGIC\n")
+    print( "Mean logic loop = " + str(mean_logic) + "s\n")
+    print( "Min logic loop = " + str(mini_logic) + "s\n")
+    print( "Max logic loop = " + str(maxi_logic) + "s\n")
+    print("\n")
+    print("====== TIME DISPLAY\n")
+    print( "Mean display loop = " + str(mean_display) + "s\n")
+    print( "Min display loop = " + str(mini_display) + "s\n")
+    print( "Max display loop = " + str(maxi_display) + "s\n")
+    print("\n")
+    print("========= TIME INIT\n")
+    print( "Init time = " + str(pc.get("TIME_INIT")) + "s\n")
+    print("\n")
+    print("======== TIME TOTAL\n")
+    print( "Mean main loop = " + str(mean_total) + "s\n")
+    print( "Min main loop = " + str(mini_total) + "s\n")
+    print( "Max main loop = " + str(maxi_total) + "s\n")
+    print("\n")
+
 def main():
     pc.clear()
 
@@ -88,23 +132,33 @@ def main():
     fjson = open("./logs/profile.json", "w")
     
     #Profiler without display
-    for i in range(1):
+    nbloop = 5
+    for i in range(nbloop):
         nb_npc = 10*(i+1)
         nb_obs = 10
         nb_spawner = 2+i
         _profiler = 20000
 
-        DISPLAY = False
+        DISPLAY = True
         debug_displ = False
 
 
         t = time.time()
-        colonylife.main(nb_npc=nb_npc, nb_obs=nb_obs, nb_spawner=nb_spawner, _profiler=_profiler, DISPLAY=DISPLAY, debug_displ=debug_displ)
+        colonylife.main(nb_npc=nb_npc, 
+                        nb_obs=nb_obs, 
+                        nb_spawner=nb_spawner, 
+                        _profiler=_profiler, 
+                        DISPLAY=DISPLAY, 
+                        debug_displ=debug_displ, 
+                        number=i, 
+                        max_number=nbloop)
         t = time.time() - t
 
         args = {"number":i,"nb_npc":nb_npc, "nb_obs":nb_obs, "nb_spawner":nb_spawner, "profiler":_profiler, "time_taken":t}
         writeRes(f, args)
         writeResJson(fjson, args)
+        printRes(args)
+        
         pc.clear() 
 
     f.close()

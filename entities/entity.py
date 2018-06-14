@@ -53,7 +53,7 @@ class NPC(Entity):
 
         self.shift_x = 0
         self.shift_y = 0
-        self.speed = 0.8
+        self.speed = round(random.random()*0.6, 2) + 0.4
 
         self._tick = 0
 

@@ -226,7 +226,7 @@ class CollectFood(Behaviour):
         pass    
 
     def nextStep(self):
-        self.count_recomp_path = (self.count_recomp_path+1)%360
+        self.count_recomp_path = (self.count_recomp_path+1)%180
 
         changed = False
         _target_rect = None

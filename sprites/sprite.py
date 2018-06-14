@@ -106,9 +106,9 @@ class SpriteSpawner(SpriteEntityBase):
         super(SpriteSpawner, self).__init__(color, pose)
 
     def draw(self, screen, info):
-        super(SpriteSpawner, self).draw(screen)
-
         if info:
+            super(SpriteSpawner, self).draw(screen)
+
             text = str(self.spawner.name)
             font = pygame.font.SysFont('Sans', 10)
             displ_text = font.render(text, True, basic_colors.BLACK)
