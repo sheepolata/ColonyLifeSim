@@ -1,0 +1,135 @@
+==== PARAMETERS ====
+nb_npc = 10;number = 0;profiler = 20000;nb_obs = 10;nb_spawner = 2;time_taken = 74.7820000648
+
+===== RESULTS =====
+========== NPC DATA
+Number of survivors = 9
+Mean NPC number = 9.65
+List NPC count = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+
+======== TIME LOGIC
+Mean logic loop = 0.0034711999893188477s
+Min logic loop = 0.0s
+Max logic loop = 0.859999895096s
+
+====== TIME DISPLAY
+Mean display loop = 1.0001659393310546e-07s
+Min display loop = 0.0s
+Max display loop = 0.00100016593933s
+
+========= TIME INIT
+Init time = 4.01300001144s
+
+======== TIME TOTAL
+Mean main loop = 0.0035347000122070314s
+Min main loop = 0.0s
+Max main loop = 0.859999895096s
+
+==== PARAMETERS ====
+nb_npc = 20;number = 1;profiler = 20000;nb_obs = 10;nb_spawner = 3;time_taken = 275.754999876
+
+===== RESULTS =====
+========== NPC DATA
+Number of survivors = 18
+Mean NPC number = 19.425
+List NPC count = [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 19, 19, 19, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18]
+
+======== TIME LOGIC
+Mean logic loop = 0.013506400370597839s
+Min logic loop = 0.0s
+Max logic loop = 2.64600014687s
+
+====== TIME DISPLAY
+Mean display loop = 3.5001039505004885e-07s
+Min display loop = 0.0s
+Max display loop = 0.00100016593933s
+
+========= TIME INIT
+Init time = 4.15999984741s
+
+======== TIME TOTAL
+Mean main loop = 0.01357515001296997s
+Min main loop = 0.0s
+Max main loop = 2.64600014687s
+
+==== PARAMETERS ====
+nb_npc = 30;number = 2;profiler = 20000;nb_obs = 10;nb_spawner = 4;time_taken = 315.332999945
+
+===== RESULTS =====
+========== NPC DATA
+Number of survivors = 28
+Mean NPC number = 29.35
+List NPC count = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29, 29, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28]
+
+======== TIME LOGIC
+Mean logic loop = 0.01554954982995987s
+Min logic loop = 0.0s
+Max logic loop = 1.90300011635s
+
+====== TIME DISPLAY
+Mean display loop = 3.000020980834961e-07s
+Min display loop = 0.0s
+Max display loop = 0.00100016593933s
+
+========= TIME INIT
+Init time = 2.73599982262s
+
+======== TIME TOTAL
+Mean main loop = 0.015623949980735779s
+Min main loop = 0.0s
+Max main loop = 1.90300011635s
+
+==== PARAMETERS ====
+nb_npc = 40;number = 3;profiler = 20000;nb_obs = 10;nb_spawner = 5;time_taken = 469.343000174
+
+===== RESULTS =====
+========== NPC DATA
+Number of survivors = 38
+Mean NPC number = 39.325
+List NPC count = [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 39, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38]
+
+======== TIME LOGIC
+Mean logic loop = 0.023197800302505494s
+Min logic loop = 0.0s
+Max logic loop = 2.85199999809s
+
+====== TIME DISPLAY
+Mean display loop = 2.499938011169434e-07s
+Min display loop = 0.0s
+Max display loop = 0.00200009346008s
+
+========= TIME INIT
+Init time = 3.7460000515s
+
+======== TIME TOTAL
+Mean main loop = 0.023273399984836577s
+Min main loop = 0.0s
+Max main loop = 2.85199999809s
+
+==== PARAMETERS ====
+nb_npc = 50;number = 4;profiler = 20000;nb_obs = 10;nb_spawner = 6;time_taken = 549.871999979
+
+===== RESULTS =====
+========== NPC DATA
+Number of survivors = 44
+Mean NPC number = 47.925
+List NPC count = [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 49, 47, 47, 45, 45, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44]
+
+======== TIME LOGIC
+Mean logic loop = 0.027208049929141997s
+Min logic loop = 0.0s
+Max logic loop = 3.65900015831s
+
+====== TIME DISPLAY
+Mean display loop = 3.000140190124512e-07s
+Min display loop = 0.0s
+Max display loop = 0.00100016593933s
+
+========= TIME INIT
+Init time = 3.84899997711s
+
+======== TIME TOTAL
+Mean main loop = 0.02729025001525879s
+Min main loop = 0.0s
+Max main loop = 3.65900015831s
+
