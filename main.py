@@ -64,7 +64,7 @@ def main():
 
 
     l_npc = []
-    for i in range(100):
+    for i in range(10):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
@@ -78,6 +78,7 @@ def main():
         for i in range(1):
             spawnerFood.spawn()
         l_spawner.append(spawnerFood)
+
 
 
     run = True
@@ -109,7 +110,7 @@ def main():
     while run:
         t1 = time.time()
 
-        # clock.tick(60) #tick at 60fps
+        # clock.tick(120) #tick at 120fps
 
         t_other = time.time()
 
@@ -148,10 +149,14 @@ def main():
                 elif event.key == K_SPACE:
                     paused = not paused
                 elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    for e in l_npc:
+                        e.selected = True
                     selected = l_npc
                     shift_list_ent_inf = 0
                     shift_list_ent_sup = shift_list_ent_span
                 elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    for e in l_npc:
+                        e.selected = True
                     selected = copy.copy(l_npc)
                     np.random.shuffle(selected)
                     selected = selected[:8]
@@ -208,9 +213,12 @@ def main():
                         selection_on = False
                         selection_rect.updateRect(event.pos)
 
+                        for e in selected:
+                            e.selected = False
                         selected = []
                         for e in l_npc:
                             if selection_rect.colliderect(e.sprite.rect):
+                                e.selected = True
                                 selected.append(e)
                         shift_list_ent_inf = 0
                         shift_list_ent_sup = shift_list_ent_span
@@ -316,7 +324,7 @@ def main():
             shift = shift + fontsize + 2
 
         for e in selected[shift_list_ent_inf:shift_list_ent_sup]:
-            txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
+            txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ") + " + str(e.have_to_eat)
             displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
             txt_hunger = "     hunger : " + str(e.hunger) + "/" + str(e.hunger_max) + " (" + str(e.hunger_thresh) + ")"

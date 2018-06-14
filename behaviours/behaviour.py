@@ -23,7 +23,7 @@ class Behaviour(object):
 
         self.target = self.entity.getPose()
 
-    def computePath(self, _target):
+    def computePath(self, _target, _target_rect=None):
 
         current_rect = self.env.getCurrentRect(self.entity.getPose())
         if current_rect == None:
@@ -33,10 +33,13 @@ class Behaviour(object):
                 current_rect = self.env.getCurrentRect(self.entity.getPose())
             # return -1
 
-        target_rect = self.env.getCurrentRect(_target)
-        trial = 0
-        if target_rect == None:
-            return -1
+        if _target_rect == None:
+            target_rect = self.env.getCurrentRect(_target)
+            trial = 0
+            if target_rect == None:
+                return -1
+        else:
+            target_rect = _target_rect
 
         self.target = _target
 
@@ -76,7 +79,9 @@ class Behaviour(object):
             for p in reversed(path_astar):
                 self.path.append(p)
 
+        # print self.target
         self.path.append(self.target)
+        # print self.path
         return 1
 
     def nextStep(self):
@@ -89,7 +94,7 @@ class Behaviour(object):
 
         self.target = self.path[self.ipath]
 
-
+        # print self.target
         if utils.near(self.entity.getPose(), self.target, _thresh=self.entity.speed + 1):
             self.ipath_prev = self.ipath
             self.ipath += 1
@@ -126,7 +131,6 @@ class EmptyBehaviour(Behaviour):
 
     def nextStep(self):
         return 1
-        
 
 class IdleBehaviour(Behaviour):
     def __init__(self, entity, env):
@@ -154,7 +158,7 @@ class IdleBehaviour(Behaviour):
             ):
             _target = (tx, ty)
 
-            return super(IdleBehaviour, self).computePath(_target)
+            return super(IdleBehaviour, self).computePath(_target, None)
         else: 
             return -1
 
@@ -177,14 +181,13 @@ class GOTOBehaviour(Behaviour):
     def setSpecificTarget(self, st):
         self.specific_target = st
 
-    def computePath(self):
+    def computePath(self, _target_rect=None):
         del self.path[:]
-        return super(GOTOBehaviour, self).computePath(self.specific_target)
+        return super(GOTOBehaviour, self).computePath(self.specific_target, _target_rect=_target_rect)
 
     def nextStep(self):
         self.count = (self.count+1) % 150
         return super(GOTOBehaviour, self).nextStep()
-
 
 class GOTORessource(GOTOBehaviour):
     def __init__(self, entity, env, ressource):
@@ -194,11 +197,84 @@ class GOTORessource(GOTOBehaviour):
         self.state = "gotoressource"
         self.label = "GTR"
 
-    def computePath(self):
-        return super(GOTORessource, self).computePath()
+    def computePath(self, _target_rect=None):
+        return super(GOTORessource, self).computePath(_target_rect=_target_rect)
 
     def nextStep(self):
         return super(GOTORessource, self).nextStep()
+
+class CollectFood(Behaviour):
+    def __init__(self, entity, env):
+        super(CollectFood, self).__init__(entity, env)
+
+        self.state = "collectfood"
+        self.label = "COFO"
+
+        self.count_recomp_path = 0
+
+        self.gotobehaviour = None
+        self.harvestbehaviour = None
+            
+        self.entity.target_res = None
+
+    def computePath(self):
+        # res, _tar_res = self.env.getClosestRessource(self.entity.getPose(), "food")
+        # if res == None:
+        #     return -1
+        # else:
+        #     return 1
+        pass    
+
+    def nextStep(self):
+        self.count_recomp_path = (self.count_recomp_path+1)%360
+
+        changed = False
+        _target_rect = None
+        # print self.entity.target_res
+        if self.entity.target_res == None:
+            changed = True
+            self.entity.target_res, _target_rect = self.env.getClosestRessource(self.entity.getPose(), "food")
+            if self.entity.target_res == None:
+                return 1
+            self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
+            self.state = "collectfood:GTR"
+        elif self.count_recomp_path == 0:
+            old_tr, _target_rect = self.env.getClosestRessource(self.entity.getPose(), "food")
+            if self.entity.target_res != None and old_tr != None and self.entity.target_res != old_tr:
+                changed = True
+                self.entity.target_res = old_tr
+                self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
+                self.state = "collectfood:GTR"
+        
+        if changed:
+            self.gotobehaviour.computePath(_target_rect=_target_rect)
+            self.path = self.gotobehaviour.path
+            changed = False
+
+        # print(self.gotobehaviour, self.harvestbehaviour)
+        if self.gotobehaviour != None:
+            ns = self.gotobehaviour.nextStep()
+            if ns == 1:
+                self.gotobehaviour = None
+                self.harvestbehaviour = Harvest(self.entity, self.env, self.entity.target_res)
+                self.harvestbehaviour.computePath()
+                self.path = self.harvestbehaviour.path
+
+                self.state = "collectfood:HAR"
+                return 0
+            else:
+                return 0
+        elif self.harvestbehaviour != None:
+            ns = self.harvestbehaviour.nextStep()
+            # print ("ns=",ns)
+            if ns == 1:
+                # print "end"
+                self.harvestbehaviour = None
+                return 1
+            else:
+                return 0
+        else:
+            return -1
 
 class Wait(Behaviour):
     def __init__(self, entity, env, clock):
@@ -233,8 +309,7 @@ class SpawnerBehaviour(Behaviour):
         self.count = (self.count+1) % self.period
         if self.count == 0 and self.entity.current_spawnee < self.entity.max_spawnee:
             return 1
-        return 0
-                        
+        return 0                    
 
 class Harvest(Behaviour):
     def __init__(self, entity, env, res):
@@ -243,30 +318,47 @@ class Harvest(Behaviour):
         self.env = env
         self.res = res
 
+        self.count = -1
+
         self.state = "harvest"
         self.label = "HAR"
 
     def computePath(self):
+        self.path = []
         return 1
 
     def nextStep(self):
         if self.res == None:
             return -1
-
-        self.entity.collectRessource(self.res)
-
-        return 1
+        
+        if self.count == -1:
+            self.count = self.entity.collectRessource(self.res)
+            # print "harvest begin"
+            return 0
+        elif self.count <= 0:
+            # print "harvest over"
+            self.count = -1
+            return 1
+        else:
+            self.count -= 1
+            # print self.count
+            return 0
         
 class RegrowBehaviour(Behaviour):
-    def __init__(self, res, env):
+    def __init__(self, res, env, period):
         super(RegrowBehaviour, self).__init__(res, env)
 
         self.state = "regrow"
         self.label = "REG"
 
+        self.period = period
+        self.count = 0
+
     def computePath(self):
         return 1
 
     def nextStep(self):
-        self.entity.regrow()
+        self.count += 1
+        if self.count%self.period == 0:
+            self.entity.regrow()
         return 1
