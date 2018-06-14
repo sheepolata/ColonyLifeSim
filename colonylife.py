@@ -25,7 +25,7 @@ import os
 from pygame.locals import *
 
 
-#Generate zip file for ready-to-use windows app (in root directory) : C:/Python27/Scripts/pyinstaller main.py
+#Generate zip file for ready-to-use windows app (in root directory) : pyinstaller -F colonylife.py
 
 
 def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
@@ -71,7 +71,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         env.addObstacle(o)
     env.splitEnvironment()
     env.constructGraph(Env.areNeigbhoursSquare)
-    env.constructRiver(5)
+    env.constructRiver(0)
 
 
     l_npc = []
@@ -83,7 +83,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     l_spawner = []
     for i in range(nb_spawner):
-        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
+        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 15, random.randint(540, 620), random.random()*0.6 + 0.8, True)
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
         for i in range(1):
@@ -379,7 +379,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 text += " PAUSED"
             # text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
             text2 = "{0:03d}% logic, {1:03d}% display, {2:03d}% other".format(int(round((round(t_update, 4) / diff_t)*100)), int(round((round(t_display, 4) / diff_t)*100)), int(round((round(t_other, 4) / diff_t)*100)))
-            text3 = "Selected Entities (" + str(len(selected_npc)) + ") :"
+            text3 = "Selected Entities ({0}/{1}) :".format(str(len(selected_npc)), str(len(l_npc)))
             displ_text = font.render(text, True, basic_colors.BLACK)
             displ_text2 = font.render(text2, True, basic_colors.BLACK)
             displ_text3 = font.render(text3, True, basic_colors.BLACK)
@@ -496,4 +496,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=100, nb_obs=15, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=100, nb_obs=0, nb_spawner=1, _profiler=-1, DISPLAY=True, debug_displ=False)
