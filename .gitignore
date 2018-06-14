@@ -1,5 +1,5 @@
-./*.pyc
-./*.pyo
+*.pyc
+*.pyo
 behaviours/*.pyc
 entities/*.pyc
 environment/*.pyc
