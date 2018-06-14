@@ -83,7 +83,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     l_spawner = []
     for i in range(nb_spawner):
-        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 15, random.randint(540, 620), random.random()*0.6 + 0.8, True)
+        spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
         for i in range(1):
