@@ -13,4 +13,4 @@ utils/*.pyo
 build/*
 dist/colonylife/*
 desktop.ini
-main.spec
+*.spec
