@@ -71,7 +71,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         env.addObstacle(o)
     env.splitEnvironment()
     env.constructGraph(Env.areNeigbhoursSquare)
-    env.constructRiver(0)
+    env.constructRiver(5)
 
 
     l_npc = []
@@ -496,4 +496,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=100, nb_obs=0, nb_spawner=1, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=80, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
