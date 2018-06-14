@@ -126,6 +126,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     tinit = time.time() - tinit
     pc.set("TIME_INIT", tinit)
 
+    t_loop = 0.1
+
+    t_update_list = []
+    t_display_list = []
+    t_other_list = []
+
     while run:
 
         t1 = time.time()
@@ -273,6 +279,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             # print [x.name for x in selected_npc]
 
         t_other = time.time() - t_other
+        t_other_list.append(t_other)
+        if len(t_other_list) > 100:
+            t_other_list = t_other_list[1:]
 
         t_update = time.time()
         if PROFIL:
@@ -295,6 +304,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
+        t_update_list.append(t_update)
+        if len(t_update_list) > 100:
+            t_update_list = t_update_list[1:]
         if PROFIL:
             T_LOGIC = time.time() - T_LOGIC
             pc.append_to("TIME_LOGIC", T_LOGIC)
@@ -341,13 +353,16 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 selection_rect.draw(alpha_surface)
 
             t_display = time.time() - t_display
+            t_display_list.append(t_display)
+            if len(t_display_list) > 100:
+                t_display_list = t_display_list[1:]
 
 
             #Info surface
             t2 = time.time()
-            diff_t = t2 - t1
+            diff_t = (t2 - t1) if (t2 - t1) > 0 else 0.0001
 
-            fps = round(1.0 / diff_t, 0)
+            fps = round(1.0 / t_loop, 0)
             q_time.append(round(fps))
             if len(q_time) >= 50 : q_time = q_time[1:]
 
@@ -359,7 +374,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             # text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
             tmp = int(round(np.mean(q_time)))
-            text = "{0:03d} LPS ({1:.3f}s/loop)".format(tmp, round(diff_t, 3))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
+            text = "{0:03d} LPS (~{1:.4f}s/loop)".format(tmp, round(diff_t, 4))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
             if paused:
                 text += " PAUSED"
             # text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
@@ -377,7 +392,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
             # print (shift_list_ent_inf, shift_list_ent_sup)
-
             if shift_list_ent_inf > 0:
                 txt_dotdotdot = "..."
                 displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
@@ -461,6 +475,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             T_TOTAL = time.time() - T_TOTAL
             pc.append_to("TIME_TOTAL", T_TOTAL)
+        t_loop = time.time() - t1
+
+        # min_time_loop = 0.002
+        # if t_loop < min_time_loop:
+        #     time.sleep(min_time_loop - t_loop)
+        #     t_loop = min_time_loop
+        #     print("sleep for {}".format(min_time_loop-t_loop))
 
     for e in l_npc:
         e.die()
@@ -475,4 +496,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=20, nb_obs=15, nb_spawner=3, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=100, nb_obs=15, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
