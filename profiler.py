@@ -88,7 +88,7 @@ def main():
     fjson = open("./logs/profile.json", "w")
     
     #Profiler without display
-    for i in range(3):
+    for i in range(1):
         nb_npc = 10*(i+1)
         nb_obs = 10
         nb_spawner = 2+i

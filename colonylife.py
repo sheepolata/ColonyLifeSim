@@ -101,14 +101,19 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     color_pause_button = basic_colors.OLIVE
     pause_button = pygame.Rect((main_surface_width + info_surface_width*0.35, main_surface_height*0.94), 
                                 (info_surface_width*0.25, info_surface_height*0.05))
+
+    color_info_button = basic_colors.YELLOW
+    info_button = pygame.Rect((main_surface_width + 10, main_surface_height*0.84), 
+                                (info_surface_width*0.25, info_surface_height*0.05))
     
     q_time = []
 
-    selected = []
+    selected_npc = []
     selection_on = False
     selection_rect = None
 
     paused = False
+    info = False
 
     shift_list_ent_span = 8
     shift_list_ent_inf = 0
@@ -119,9 +124,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     while run:
 
-        T_TOTAL = time.time()
-
+        t1 = time.time()
         if PROFIL:
+            T_TOTAL = time.time()
+
             if curr_profiler%500 == 0:
                 pc.append_to("NB_NPC", len(l_npc))
             curr_profiler += 1
@@ -130,8 +136,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             if curr_profiler >= _profiler:
                 print ("End because profiler finished")
                 run = False
+        
 
-        t1 = time.time()
 
         # clock.tick(120) #tick at 120fps
 
@@ -162,6 +168,14 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         else:
             color_pause_button = basic_colors.OLIVE
 
+        if info_button.collidepoint(mp):
+            color_info_button = basic_colors.YELLOW_3
+        elif info:
+            color_info_button = basic_colors.YELLOW_2
+        else:
+            color_info_button = basic_colors.YELLOW
+
+
         #Single event control
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -169,20 +183,22 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     run = False
                 elif event.key == K_d:
                     DISPLAY_DEBUG = not DISPLAY_DEBUG
+                elif event.key == K_i:
+                    info = not info
                 elif event.key == K_SPACE:
                     paused = not paused
                 elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     for e in l_npc:
-                        e.selected = True
-                    selected = l_npc
+                        e.selected_npc = True
+                    selected_npc = l_npc
                     shift_list_ent_inf = 0
                     shift_list_ent_sup = shift_list_ent_span
                 elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
                     for e in l_npc:
-                        e.selected = True
-                    selected = copy.copy(l_npc)
-                    np.random.shuffle(selected)
-                    selected = selected[:8]
+                        e.selected_npc = True
+                    selected_npc = copy.copy(l_npc)
+                    np.random.shuffle(selected_npc)
+                    selected_npc = selected_npc[:8]
 
                     shift_list_ent_inf = 0
                     shift_list_ent_sup = shift_list_ent_span
@@ -196,6 +212,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
                     elif pause_button.collidepoint(mp):
                         paused = not paused
+                    elif info_button.collidepoint(mp):
+                        info = not info
 
                     if alpha_surface.get_rect(topleft=topleft_alpha_surface).collidepoint(mp) and not selection_on:
                         selection_on = True
@@ -205,10 +223,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     pass
                 #RMB
                 if event.button == 3:
-                    if selected:
+                    if selected_npc:
                         rect = env.getCurrentRect(mp)
                         if rect != None:
-                            for e in selected:
+                            for e in selected_npc:
                                 rect_e = env.getCurrentRect(e.getPose())
                                 if e.behaviour.state == "goto":
                                     e.behaviour.setSpecificTarget(mp)
@@ -223,8 +241,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 #Mouth Wheel down
                 if event.button == 5:
                     if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
-                        shift_list_ent_inf = shift_list_ent_inf+1 if shift_list_ent_inf<(len(selected)-shift_list_ent_span) else len(selected)-shift_list_ent_span
-                        shift_list_ent_sup = shift_list_ent_sup+1 if shift_list_ent_sup<len(selected) else len(selected)
+                        shift_list_ent_inf = shift_list_ent_inf+1 if shift_list_ent_inf<(len(selected_npc)-shift_list_ent_span) else len(selected_npc)-shift_list_ent_span
+                        shift_list_ent_sup = shift_list_ent_sup+1 if shift_list_ent_sup<len(selected_npc) else len(selected_npc)
             elif event.type == MOUSEMOTION:
                 if selection_on:
                     # update the selection rectangle while the mouse is moving
@@ -236,23 +254,25 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         selection_on = False
                         selection_rect.updateRect(event.pos)
 
-                        for e in selected:
-                            e.selected = False
-                        selected = []
+                        for e in selected_npc:
+                            e.selected_npc = False
+                        selected_npc = []
                         for e in l_npc:
                             if selection_rect.colliderect(e.sprite.rect):
-                                e.selected = True
-                                selected.append(e)
+                                e.selected_npc = True
+                                selected_npc.append(e)
                         shift_list_ent_inf = 0
                         shift_list_ent_sup = shift_list_ent_span
 
                         selection_rect = None
-                        # print [x.name for x in selected]
+                        # print [x.name for x in selected_npc]
 
         t_other = time.time() - t_other
 
         t_update = time.time()
-        T_LOGIC = time.time()
+        if PROFIL:
+            T_LOGIC = time.time()
+
         if not paused:
             #Logic
             #play each entity
@@ -270,12 +290,15 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
-        T_LOGIC = time.time() - T_LOGIC
-        pc.append_to("TIME_LOGIC", T_LOGIC)
+        if PROFIL:
+            T_LOGIC = time.time() - T_LOGIC
+            pc.append_to("TIME_LOGIC", T_LOGIC)
 
 
         #Display Debug
-        T_DISPLAY = time.time()
+        if PROFIL:
+            T_DISPLAY = time.time()
+
         if DISPLAY:
             t_display = time.time()
 
@@ -300,13 +323,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             #Entities
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
-                    r.sprite.draw(screen, alpha_surface)
+                    r.sprite.draw(screen, alpha_surface, info)
             for e in l_npc:
-                e.sprite.draw(screen)
-                if e in selected:
+                e.sprite.draw(screen, False)
+                if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
             for sp in l_spawner:
-                sp.sprite.draw(screen)
+                sp.sprite.draw(screen, False)
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
@@ -321,17 +344,22 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             fps = round(1.0 / diff_t, 0)
             q_time.append(round(fps))
-            if len(q_time) >= 75 : q_time = q_time[1:]
+            if len(q_time) >= 50 : q_time = q_time[1:]
 
             #info text
             fontsize = int(info_surface_height*0.02)
             font = pygame.font.SysFont('Sans', fontsize)
 
-            text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
+            # print('> Results aggregation [{0:{2}d}/{1}]'.format(i+1, n_files , len_files), end='\r')
+
+            # text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
+            tmp = int(round(np.mean(q_time)))
+            text = "{0:03d} LPS ({1:.3f}s/loop)".format(tmp, round(diff_t, 3))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
             if paused:
                 text += " PAUSED"
-            text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
-            text3 = "Selected Entities (" + str(len(selected)) + ") :"
+            # text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
+            text2 = "{0:03d}% logic, {1:03d}% display, {2:03d}% other".format(int(round((round(t_update, 4) / diff_t)*100)), int(round((round(t_display, 4) / diff_t)*100)), int(round((round(t_other, 4) / diff_t)*100)))
+            text3 = "Selected Entities (" + str(len(selected_npc)) + ") :"
             displ_text = font.render(text, True, basic_colors.BLACK)
             displ_text2 = font.render(text2, True, basic_colors.BLACK)
             displ_text3 = font.render(text3, True, basic_colors.BLACK)
@@ -351,11 +379,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
                 shift = shift + fontsize + 2
 
-            for e in selected[shift_list_ent_inf:shift_list_ent_sup]:
-                txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ") + " + str(e.have_to_eat)
+            for e in selected_npc[shift_list_ent_inf:shift_list_ent_sup]:
+                txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
                 displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
-                txt_hunger = "     hunger : " + str(e.hunger) + "/" + str(e.hunger_max) + " (" + str(e.hunger_thresh) + ")"
+                txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
                 txt_behaviour = "     state : " + e.behaviour.state
@@ -375,7 +403,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     info_surface.blit(displ_txt_bp, (10, shift + fontsize))
                     shift = shift + fontsize
 
-            if shift_list_ent_sup < len(selected):
+            if shift_list_ent_sup < len(selected_npc):
                 txt_dotdotdot = "..."
                 displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
                 info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
@@ -390,7 +418,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             rect_text   = font.render("Rect (D)", True, basic_colors.BLACK)
 
-            rect_paused = font.render("Pause (Spc)", True, basic_colors.BLACK)
+            paused_text = font.render("Pause (Spc)", True, basic_colors.BLACK)
+
+            info_text = font.render("Info (I)", True, basic_colors.BLACK)
 
             #Blit and Flip surfaces
             window.blit(screen, (0, 0))
@@ -406,16 +436,21 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 rect_button.center[1] - (rect_text.get_height()/2) ))
 
             pygame.draw.rect(window, color_pause_button, pause_button)
-            window.blit(rect_paused, (pause_button.center[0] - (rect_paused.get_width()/2), 
-                pause_button.center[1] - (rect_paused.get_height()/2) ) )
+            window.blit(paused_text, (pause_button.center[0] - (paused_text.get_width()/2), 
+                pause_button.center[1] - (paused_text.get_height()/2) ) )
+
+            pygame.draw.rect(window, color_info_button, info_button)
+            window.blit(info_text, (info_button.center[0] - (info_text.get_width()/2), 
+                info_button.center[1] - (info_text.get_height()/2) ) )
 
             pygame.display.flip()
 
-        T_DISPLAY = time.time() - T_DISPLAY
-        pc.append_to("TIME_DISPLAY", T_DISPLAY)
+        if PROFIL:
+            T_DISPLAY = time.time() - T_DISPLAY
+            pc.append_to("TIME_DISPLAY", T_DISPLAY)
 
-        T_TOTAL = time.time() - T_TOTAL
-        pc.append_to("TIME_TOTAL", T_TOTAL)
+            T_TOTAL = time.time() - T_TOTAL
+            pc.append_to("TIME_TOTAL", T_TOTAL)
 
     for e in l_npc:
         e.die()
@@ -430,4 +465,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main()
+    main(nb_npc=100, nb_obs=15, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
