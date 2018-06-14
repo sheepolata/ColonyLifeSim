@@ -11,6 +11,8 @@ def clear():
         "TIME_INIT": 0
     }
     
+clear()
+    
 def append_to(name, value, _max=-1):
     global profiler_config
     if isinstance(profiler_config[name], list):
