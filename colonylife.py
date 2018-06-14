@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import entities.entity as entities
 import environment.environment as Env
@@ -8,53 +9,59 @@ import utils.utils as utils
 import utils.basic_colors as basic_colors
 import utils.selectionrect as select_rect
 
+import profilerConfig as pc
+
 import pygame
 import random
 import sys
 import time
 import numpy as np
 import copy
-
-
 from screeninfo import get_monitors
-monitor = get_monitors()[0]
-
-# main_surface_width, main_surface_height = 860, 680
-screen_width, screen_height = int(monitor.width*0.75), int(monitor.height*0.75)
-
-main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
-
-info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
-
-
 import os
-os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
-
-
 from pygame.locals import *
 
-pygame.init()
 
 #Generate zip file for ready-to-use windows app (in root directory) : C:/Python27/Scripts/pyinstaller main.py
 
-def main():
-    DISPLAY_DEBUG = False
+
+def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False):
+
+    tinit = time.time()
+
+    #FIRST INIT
+    monitor = get_monitors()[0]
+        
+    # main_surface_width, main_surface_height = 860, 680
+    screen_width, screen_height = int(monitor.width*0.75), int(monitor.height*0.75)
+    main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
+    info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+
+
+    DISPLAY_DEBUG = debug_displ
+
+    pygame.init()
+
+    PROFIL = _profiler != -1
+    curr_profiler = 0
 
     env = Env.Environment(main_surface_width, main_surface_height)
 
     clock = pygame.time.Clock()
 
-    window = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Colony Life Sim")
+    if DISPLAY:
+        window = pygame.display.set_mode((screen_width, screen_height))
+        pygame.display.set_caption("Colony Life Sim")
 
-    topleft_screen = (0, 0)
-    screen = pygame.Surface((main_surface_width, main_surface_height))
-    topleft_alpha_surface = topleft_screen
-    alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
-    topleft_info = (topleft_screen[0]+main_surface_width, 0)
-    info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
+        topleft_screen = (0, 0)
+        screen = pygame.Surface((main_surface_width, main_surface_height))
+        topleft_alpha_surface = topleft_screen
+        alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
+        topleft_info = (topleft_screen[0]+main_surface_width, 0)
+        info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
     
-    for i in range(10):
+    for i in range(nb_obs):
         o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
         o.setRandomPose(main_surface_width, main_surface_height)
         env.addObstacle(o)
@@ -64,14 +71,14 @@ def main():
 
 
     l_npc = []
-    for i in range(10):
+    for i in range(nb_npc):
         entity = entities.NPC(env, "entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
         l_npc.append(entity)
 
     l_spawner = []
-    for i in range(2):
+    for i in range(nb_spawner):
         spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
@@ -107,16 +114,32 @@ def main():
     shift_list_ent_inf = 0
     shift_list_ent_sup = shift_list_ent_span
 
+    tinit = time.time() - tinit
+    pc.set("TIME_INIT", tinit)
+
     while run:
+
+        T_TOTAL = time.time()
+
+        if PROFIL:
+            if curr_profiler%500 == 0:
+                pc.append_to("NB_NPC", len(l_npc))
+            curr_profiler += 1
+            if curr_profiler%10 == 0:
+                print(str(round(float(curr_profiler)/float(_profiler) * 100)) + "% (" + str(curr_profiler) + "/" + str(_profiler) + ")", end='\r')
+            if curr_profiler >= _profiler:
+                print ("End because profiler finished")
+                run = False
+
         t1 = time.time()
 
         # clock.tick(120) #tick at 120fps
 
         t_other = time.time()
-
-        screen.fill(basic_colors.GREEN)
-        alpha_surface.fill(basic_colors.EMPTY)
-        info_surface.fill(basic_colors.WHITE)
+        if DISPLAY:
+            screen.fill(basic_colors.GREEN)
+            alpha_surface.fill(basic_colors.EMPTY)
+            info_surface.fill(basic_colors.WHITE)
 
         mp = pygame.mouse.get_pos()
 
@@ -229,6 +252,7 @@ def main():
         t_other = time.time() - t_other
 
         t_update = time.time()
+        T_LOGIC = time.time()
         if not paused:
             #Logic
             #play each entity
@@ -246,142 +270,152 @@ def main():
             l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
+        T_LOGIC = time.time() - T_LOGIC
+        pc.append_to("TIME_LOGIC", T_LOGIC)
+
 
         #Display Debug
+        T_DISPLAY = time.time()
+        if DISPLAY:
+            t_display = time.time()
 
-        t_display = time.time()
+            if DISPLAY_DEBUG:
+                for k in env.graph.keys():
+                    for pos in env.graph[k]:
+                        # print env.graph[k][pos]/10
+                        pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
+                for r in env.graph_rect:
+                    pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
 
-        if DISPLAY_DEBUG:
-            for k in env.graph.keys():
-                for pos in env.graph[k]:
-                    # print env.graph[k][pos]/10
-                    pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
-            for r in env.graph_rect:
-                pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+            #Display
 
-        #Display
-
-        #Env
-        for o in env.obstacles:
-            o.sprite.draw(screen)
-        for i in range(1, len(env.river_path)):
-            pygame.draw.line(screen, basic_colors.BLUE, env.river_path[i-1], env.river_path[i], 5)
-        for r in env.saved_rect_from_river:
-            pygame.draw.rect(screen, basic_colors.BLUE, r)
+            #Env
+            for o in env.obstacles:
+                o.sprite.draw(screen)
+            for i in range(1, len(env.river_path)):
+                pygame.draw.line(screen, basic_colors.BLUE, env.river_path[i-1], env.river_path[i], 5)
+            for r in env.saved_rect_from_river:
+                pygame.draw.rect(screen, basic_colors.BLUE, r)
+                
+            #Entities
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.sprite.draw(screen, alpha_surface)
+            for e in l_npc:
+                e.sprite.draw(screen)
+                if e in selected:
+                    e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
+            for sp in l_spawner:
+                sp.sprite.draw(screen)
             
-        #Entities
-        for kr in env.ressources.keys():
-            for r in env.ressources[kr]:
-                r.sprite.draw(screen, alpha_surface)
-        for e in l_npc:
-            e.sprite.draw(screen)
-            if e in selected:
-                e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
-        for sp in l_spawner:
-            sp.sprite.draw(screen)
-        
-        if selection_rect != None and hasattr(selection_rect, "rect"):
-            # print selection_rect.rect
-            selection_rect.draw(alpha_surface)
+            if selection_rect != None and hasattr(selection_rect, "rect"):
+                # print selection_rect.rect
+                selection_rect.draw(alpha_surface)
 
-        t_display = time.time() - t_display
+            t_display = time.time() - t_display
 
 
-        #Info surface
-        t2 = time.time()
-        diff_t = t2 - t1
+            #Info surface
+            t2 = time.time()
+            diff_t = t2 - t1
 
-        fps = round(1.0 / diff_t, 0)
-        q_time.append(round(fps))
-        if len(q_time) >= 75 : q_time = q_time[1:]
+            fps = round(1.0 / diff_t, 0)
+            q_time.append(round(fps))
+            if len(q_time) >= 75 : q_time = q_time[1:]
 
-        #info text
-        fontsize = int(info_surface_height*0.02)
-        font = pygame.font.SysFont('Sans', fontsize)
+            #info text
+            fontsize = int(info_surface_height*0.02)
+            font = pygame.font.SysFont('Sans', fontsize)
 
-        text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
-        if paused:
-            text += " PAUSED"
-        text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
-        text3 = "Selected Entities (" + str(len(selected)) + ") :"
-        displ_text = font.render(text, True, basic_colors.BLACK)
-        displ_text2 = font.render(text2, True, basic_colors.BLACK)
-        displ_text3 = font.render(text3, True, basic_colors.BLACK)
-        info_surface.blit(displ_text, (10, 10))
-        shift = 10
-        info_surface.blit(displ_text2, (10, 10 + shift))
-        shift = 10 + shift
-        info_surface.blit(displ_text3, (10, 20 + shift))
-        shift = 20 + shift
+            text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
+            if paused:
+                text += " PAUSED"
+            text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
+            text3 = "Selected Entities (" + str(len(selected)) + ") :"
+            displ_text = font.render(text, True, basic_colors.BLACK)
+            displ_text2 = font.render(text2, True, basic_colors.BLACK)
+            displ_text3 = font.render(text3, True, basic_colors.BLACK)
+            info_surface.blit(displ_text, (10, 10))
+            shift = 10
+            info_surface.blit(displ_text2, (10, 10 + shift))
+            shift = 10 + shift
+            info_surface.blit(displ_text3, (10, 20 + shift))
+            shift = 20 + shift
 
 
-        # print (shift_list_ent_inf, shift_list_ent_sup)
+            # print (shift_list_ent_inf, shift_list_ent_sup)
 
-        if shift_list_ent_inf > 0:
-            txt_dotdotdot = "..."
-            displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
-            info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
-            shift = shift + fontsize + 2
+            if shift_list_ent_inf > 0:
+                txt_dotdotdot = "..."
+                displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
+                info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
+                shift = shift + fontsize + 2
 
-        for e in selected[shift_list_ent_inf:shift_list_ent_sup]:
-            txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ") + " + str(e.have_to_eat)
-            displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
+            for e in selected[shift_list_ent_inf:shift_list_ent_sup]:
+                txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ") + " + str(e.have_to_eat)
+                displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
-            txt_hunger = "     hunger : " + str(e.hunger) + "/" + str(e.hunger_max) + " (" + str(e.hunger_thresh) + ")"
-            displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
+                txt_hunger = "     hunger : " + str(e.hunger) + "/" + str(e.hunger_max) + " (" + str(e.hunger_thresh) + ")"
+                displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-            txt_behaviour = "     state : " + e.behaviour.state
-            displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
+                txt_behaviour = "     state : " + e.behaviour.state
+                displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
 
-            info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
-            shift = shift + fontsize + 2
-            info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
-            shift = shift + fontsize
-            info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
-            shift = shift + fontsize
-
-            for k in e.bagpack:
-                txt_bagpack = "          " + k + " : " + str(round(e.bagpack[k], 2))
-                displ_txt_bp = font.render(txt_bagpack, True, basic_colors.BLACK)
-
-                info_surface.blit(displ_txt_bp, (10, shift + fontsize))
+                info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
+                shift = shift + fontsize + 2
+                info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
+                shift = shift + fontsize
+                info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
                 shift = shift + fontsize
 
-        if shift_list_ent_sup < len(selected):
-            txt_dotdotdot = "..."
-            displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
-            info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
-            shift = shift + fontsize + 2
+                for k in e.bagpack:
+                    txt_bagpack = "          " + k + " : " + str(round(e.bagpack[k], 2))
+                    displ_txt_bp = font.render(txt_bagpack, True, basic_colors.BLACK)
+
+                    info_surface.blit(displ_txt_bp, (10, shift + fontsize))
+                    shift = shift + fontsize
+
+            if shift_list_ent_sup < len(selected):
+                txt_dotdotdot = "..."
+                displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
+                info_surface.blit(displ_dotdotdot, (10, shift + fontsize + 2))
+                shift = shift + fontsize + 2
 
 
-        #buttons
-        fontsize = int(info_surface_height*0.02)
-        font = pygame.font.SysFont('Sans', fontsize)
+            #buttons
+            fontsize = int(info_surface_height*0.02)
+            font = pygame.font.SysFont('Sans', fontsize)
 
-        quit_text   = font.render("Quit (Esc)", True, basic_colors.BLACK)
+            quit_text   = font.render("Quit (Esc)", True, basic_colors.BLACK)
 
-        rect_text   = font.render("Rect (D)", True, basic_colors.BLACK)
+            rect_text   = font.render("Rect (D)", True, basic_colors.BLACK)
 
-        rect_paused = font.render("Pause (Spc)", True, basic_colors.BLACK)
+            rect_paused = font.render("Pause (Spc)", True, basic_colors.BLACK)
 
-        #Blit and Flip surfaces
-        window.blit(screen, (0, 0))
-        window.blit(alpha_surface, (0, 0))
-        window.blit(info_surface, (main_surface_width, 0))
+            #Blit and Flip surfaces
+            window.blit(screen, (0, 0))
+            window.blit(alpha_surface, (0, 0))
+            window.blit(info_surface, (main_surface_width, 0))
 
-        pygame.draw.rect(window, color_quit_button, quit_button)
-        window.blit(quit_text, (quit_button.center[0] - (quit_text.get_width()/2), 
-            quit_button.center[1] - (quit_text.get_height()/2) ) )
+            pygame.draw.rect(window, color_quit_button, quit_button)
+            window.blit(quit_text, (quit_button.center[0] - (quit_text.get_width()/2), 
+                quit_button.center[1] - (quit_text.get_height()/2) ) )
 
-        pygame.draw.rect(window, color_rect_button, rect_button)
-        window.blit(rect_text, (rect_button.center[0] - (rect_text.get_width()/2), 
-            rect_button.center[1] - (rect_text.get_height()/2) ))
+            pygame.draw.rect(window, color_rect_button, rect_button)
+            window.blit(rect_text, (rect_button.center[0] - (rect_text.get_width()/2), 
+                rect_button.center[1] - (rect_text.get_height()/2) ))
 
-        pygame.draw.rect(window, color_pause_button, pause_button)
-        window.blit(rect_paused, (pause_button.center[0] - (rect_paused.get_width()/2), 
-            pause_button.center[1] - (rect_paused.get_height()/2) ) )
+            pygame.draw.rect(window, color_pause_button, pause_button)
+            window.blit(rect_paused, (pause_button.center[0] - (rect_paused.get_width()/2), 
+                pause_button.center[1] - (rect_paused.get_height()/2) ) )
 
-        pygame.display.flip()
+            pygame.display.flip()
+
+        T_DISPLAY = time.time() - T_DISPLAY
+        pc.append_to("TIME_DISPLAY", T_DISPLAY)
+
+        T_TOTAL = time.time() - T_TOTAL
+        pc.append_to("TIME_TOTAL", T_TOTAL)
 
     for e in l_npc:
         e.die()
