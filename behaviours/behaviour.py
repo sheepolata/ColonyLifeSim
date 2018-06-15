@@ -55,7 +55,7 @@ class Behaviour(object):
             mini = min(current_rect.center[0], target_rect.center[0])
             maxi = max(current_rect.center[0], target_rect.center[0])
 
-            for step_x in range(mini, maxi, 15):
+            for step_x in range(mini, maxi, 6):
                 y = a*step_x + b
                 if self.env.collideOneObstacle_Point((step_x, y)):
                     astar_needed = True
@@ -126,7 +126,7 @@ class EmptyBehaviour(Behaviour):
         super(EmptyBehaviour, self).__init__(entity, env)
         self.state = "empty"
         self.label = "EMP"
-        
+
     def computePath(self):
         return 1
 
