@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from __future__ import print_function
+
 import pygame
 import math
 import random 
@@ -7,6 +12,7 @@ import numpy as np
 
 import utils.utils as utils
 import utils.pathfinding as pf
+import profilerConfig as pc
 
 class Environment(object):
     """docstring for Environment"""
@@ -15,6 +21,8 @@ class Environment(object):
         self.height = h
 
         self.obstacles = []
+        self.obstacles_rect = []
+
         self.ressources = {}
 
         self.min_tile_w = int(self.width*0.1)
@@ -27,7 +35,17 @@ class Environment(object):
         self.river_path = []
         self.saved_rect_from_river = []
 
+
         self.loading = 0
+
+    def constructEnvironment(self, nb_passage):
+        pc.setDict("ENV_CONSTR_TRACK", "scope", "Split the Environment...")
+        self.splitEnvironment()
+        pc.setDict("ENV_CONSTR_TRACK", "scope", "Construct the Graph...")
+        self.constructGraph(areNeigbhoursSquare)
+        pc.setDict("ENV_CONSTR_TRACK", "scope", "Construct the River...")
+        self.constructRiver(nb_passage)
+        pc.setDict("ENV_CONSTR_TRACK", "scope", "End ! Enjoy !")
 
     def addObstacle(self, obs):
         self.obstacles.append(obs)
@@ -108,16 +126,22 @@ class Environment(object):
         return False
 
     def constructRiver(self, nb_passage):
-        print("constructRiver")
+        # print("constructRiver")
         paths = []
 
         prev_point = None
 
-
         wprange = range(10, self.width, self.width/5 - 1)
         wprange.append(self.width - 5)
 
+        curr = 0
+        pc.setDict("ENV_CONSTR_TRACK", "max", len(wprange))
+        pc.setDict("ENV_CONSTR_TRACK", "current", curr)
+
         for i in range(1, len(wprange)):
+            curr += 1
+            pc.setDict("ENV_CONSTR_TRACK", "current", curr)
+            
             if prev_point == None:
                 width_wp_left = wprange[i-1]
 
@@ -161,8 +185,8 @@ class Environment(object):
             self.graph.pop(rm, None)
                 
         self.constructGraph(areNeigbhoursInflated)
-
-        print("End constructRiver")
+        
+        # print("End constructRiver")
 
     def getCurrentRect(self, point):
             for r in self.graph_rect:
@@ -171,7 +195,7 @@ class Environment(object):
             return None
 
     def splitEnvironment(self):
-        print("split")
+        # print("split")
         self.graph_rect = []
 
         min_split_w = int(self.width*0.01)
@@ -182,12 +206,8 @@ class Environment(object):
 
         processList.append(first)
 
-        lap = 0
-
         while processList:
             current = processList.pop()
-            
-            lap += 1
 
             self.graph[(current.left, current.top)] = []
 
@@ -210,28 +230,39 @@ class Environment(object):
                 #add to final list
                 self.graph_rect.append(current)
 
-        print("Compute & remove  useless")
+        # print("Compute & remove  useless")
+        self.obstacles_rect = [x for x in self.graph_rect if self.collideOneObstacle_Rect(x)]
         self.graph_rect = [x for x in self.graph_rect if not self.collideOneObstacle_Rect(x)]
-        print("end split")
+        # print("end split")
 
     def constructGraph(self, neighbour_function):
-        print("constructGraph")
-        print("set costs")
+        # print("constructGraph")
+        # print("set costs")
         for r in self.graph_rect:
             self.graph_cost[r.center] = 1.0
-        print("Compute neighbours")
+
+        # print("Compute neighbours")
+        
         tot = len(self.graph_rect)
         curr = 0
+
+        pc.setDict("ENV_CONSTR_TRACK", "max", tot)
+        pc.setDict("ENV_CONSTR_TRACK", "current", curr)
+
         for r in self.graph_rect:
             curr += 1
+            pc.setDict("ENV_CONSTR_TRACK", "current", curr) 
             self.loading = round((float(curr)/float(tot))*100, 2)
-            if self.loading % 4 == 0:
-                print(str(self.loading) + "% (" + str(curr) + "/" + str(tot) + ")")
+            pc.setDict("ENV_CONSTR_TRACK", "percent", self.loading)
+            
+            # if self.loading % 4 == 0:
+            # print(str(self.loading) + "% (" + str(curr) + "/" + str(tot) + ")", end='\r')
 
             self.graph[r.center] = {}
             for other in filter(lambda x :x.center != r.center and neighbour_function(r, x), self.graph_rect):
                 self.graph[r.center][other.center] = utils.distance2p(r.center, other.center) * self.graph_cost[other.center]
-        print("constructGraph end")
+
+        # print("constructGraph end")
 
 def splitRect(rect2split, _correction=0):
     nwf = rect2split.width/2.0

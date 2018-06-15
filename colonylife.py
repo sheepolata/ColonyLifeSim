@@ -23,10 +23,65 @@ import copy
 from screeninfo import get_monitors
 import os
 from pygame.locals import *
+import threading
 
 
 #Generate zip file for ready-to-use windows app (in root directory) : pyinstaller -F colonylife.py
 
+class DisplayLoadingThread(threading.Thread):
+    def __init__(self):
+        super(DisplayLoadingThread, self).__init__()
+    
+        monitor = get_monitors()[0]
+        
+        pygame.init()
+
+        screen_width, screen_height = int(monitor.width*0.30), int(monitor.height*0.30)
+        self.window = pygame.display.set_mode((screen_width, screen_height))
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+
+
+        self.is_running = True
+
+    def run(self):
+        while self.is_running:
+
+            self.window.fill(basic_colors.BLACK)
+
+            fontsize = int(self.window.get_height()*0.2)
+            font = pygame.font.SysFont('Sans', fontsize)
+
+            text1 = font.render("Loading...", True, basic_colors.WHITE)
+            self.window.blit(text1, (self.window.get_rect().center[0] - (text1.get_width()/2),
+                            self.window.get_height()/4 ) )
+
+            fontsize2 = int(self.window.get_height()*0.15)
+            font2 = pygame.font.SysFont('Sans', fontsize2)
+
+            text2 = font2.render(pc.get("ENV_CONSTR_TRACK")["scope"], True, basic_colors.WHITE)
+            self.window.blit(text2, (self.window.get_rect().center[0] - (text2.get_width()/2), 
+                            int(self.window.get_height()*0.5) ) )
+
+            fontsize3 = int(self.window.get_height()*0.12)
+            font3 = pygame.font.SysFont('Sans', fontsize3)
+
+            text3 = font3.render("{}%".format(pc.get("ENV_CONSTR_TRACK")["percent"]), True, basic_colors.WHITE)
+            self.window.blit(text3, (self.window.get_rect().center[0] - (text3.get_width()/2), 
+                            int(self.window.get_height()*0.65) ) )
+
+            pygame.display.flip()
+
+
+    def stop(self):
+        self.is_running = False
+        pass
+        # self._stopper.set()
+        
+    def stopped(self):
+        pass
+        # return self._stopper.isSet()
+
+        
 
 def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
 
@@ -40,6 +95,26 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
     info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+    
+    #LOADING
+    env = Env.Environment(main_surface_width, main_surface_height)
+    
+    thread_loading = DisplayLoadingThread()
+
+    thread_loading.start()
+
+    for i in range(nb_obs):
+        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
+        o.setRandomPose(main_surface_width, main_surface_height)
+        env.addObstacle(o)
+
+    env.constructEnvironment(5)
+
+    time.sleep(1)
+
+    thread_loading.stop()
+    thread_loading.join()
+
 
 
     DISPLAY_DEBUG = debug_displ
@@ -49,11 +124,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     PROFIL = _profiler != -1
     curr_profiler = 0
 
-    env = Env.Environment(main_surface_width, main_surface_height)
-
     clock = pygame.time.Clock()
 
     if DISPLAY:
+
         window = pygame.display.set_mode((screen_width, screen_height))
         caption = "Colony Life Simulation" + ("" if not PROFIL else " : Profiler n° {0}/{1}".format(number+1, max_number))
         pygame.display.set_caption(caption)
@@ -64,15 +138,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
         topleft_info = (topleft_screen[0]+main_surface_width, 0)
         info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
-    
-    for i in range(nb_obs):
-        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
-        o.setRandomPose(main_surface_width, main_surface_height)
-        env.addObstacle(o)
-    env.splitEnvironment()
-    env.constructGraph(Env.areNeigbhoursSquare)
-    env.constructRiver(5)
-
 
     l_npc = []
     for i in range(nb_npc):
@@ -326,6 +391,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
                 for r in env.graph_rect:
                     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+                for ro in env.obstacles_rect:
+                    pygame.draw.rect(alpha_surface, basic_colors.ALPHA_MAGENTA, ro, 1)
+                for rv in env.saved_rect_from_river:
+                    pygame.draw.rect(alpha_surface, basic_colors.ALPHA_CYAN, rv, 1)
+
 
             #Display
 

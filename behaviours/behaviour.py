@@ -126,6 +126,7 @@ class EmptyBehaviour(Behaviour):
         super(EmptyBehaviour, self).__init__(entity, env)
         self.state = "empty"
         self.label = "EMP"
+        
     def computePath(self):
         return 1
 
