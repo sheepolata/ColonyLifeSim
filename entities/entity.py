@@ -61,6 +61,9 @@ class NPC(Entity):
 
         self.selected = False
 
+        self.count_check_availaible_food = 0
+        self.count_check_availaible_food_period = 100
+
         #Inventory
         self.bagpack = {}
 
@@ -180,9 +183,16 @@ class NPC(Entity):
             if self.haveFood():
                 self.consumeFood()
             elif self.behaviour.label != "COFO":
-                res, _tar_res = self.env.getClosestRessource(self.getPose(), "food")
-                if res != None:
-                    self.setCollectFoodBehaviour()
+                if self.count_check_availaible_food == 0:
+                    res, _tar_res = self.env.getClosestRessource(self.getPose(), "food")
+                    if res != None:
+                        self.count_check_availaible_food = 0
+                        self.count_check_availaible_food_period = 100
+                        self.setCollectFoodBehaviour()
+                    else:
+                        self.count_check_availaible_food_period = min(self.count_check_availaible_food_period+50, 1500)
+
+                self.count_check_availaible_food = (self.count_check_availaible_food + 1) % self.count_check_availaible_food_period
 
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":

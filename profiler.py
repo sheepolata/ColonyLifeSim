@@ -139,7 +139,7 @@ def main():
         nb_spawner = 2+i
         _profiler = 20000
 
-        DISPLAY = True
+        DISPLAY = False
         debug_displ = False
 
 

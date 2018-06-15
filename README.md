@@ -61,7 +61,7 @@ Required libs (see [requirements](./requirements.txt)):
 
 ### Easy Windows Installation
 
-If you don't want to install anything execpt this application, and don't want to take part in the development, download [this zip file](/dist/appli.zip).
+If you don't want to install anything execpt this application, and don't want to take part in the development, download the one you want [from here](/dist).
 
 Once downloaded, unzip the file and execute the __main.exe__ file.
 

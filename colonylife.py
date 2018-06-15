@@ -23,10 +23,65 @@ import copy
 from screeninfo import get_monitors
 import os
 from pygame.locals import *
+import threading
 
 
-#Generate zip file for ready-to-use windows app (in root directory) : C:/Python27/Scripts/pyinstaller main.py
+#Generate zip file for ready-to-use windows app (in root directory) : pyinstaller -F colonylife.py
 
+class DisplayLoadingThread(threading.Thread):
+    def __init__(self):
+        super(DisplayLoadingThread, self).__init__()
+    
+        monitor = get_monitors()[0]
+        
+        pygame.init()
+
+        screen_width, screen_height = int(monitor.width*0.30), int(monitor.height*0.30)
+        self.window = pygame.display.set_mode((screen_width, screen_height))
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+
+
+        self.is_running = True
+
+    def run(self):
+        while self.is_running:
+
+            self.window.fill(basic_colors.BLACK)
+
+            fontsize = int(self.window.get_height()*0.2)
+            font = pygame.font.SysFont('Sans', fontsize)
+
+            text1 = font.render("Loading...", True, basic_colors.WHITE)
+            self.window.blit(text1, (self.window.get_rect().center[0] - (text1.get_width()/2),
+                            self.window.get_height()/4 ) )
+
+            fontsize2 = int(self.window.get_height()*0.15)
+            font2 = pygame.font.SysFont('Sans', fontsize2)
+
+            text2 = font2.render(pc.get("ENV_CONSTR_TRACK")["scope"], True, basic_colors.WHITE)
+            self.window.blit(text2, (self.window.get_rect().center[0] - (text2.get_width()/2), 
+                            int(self.window.get_height()*0.5) ) )
+
+            fontsize3 = int(self.window.get_height()*0.12)
+            font3 = pygame.font.SysFont('Sans', fontsize3)
+
+            text3 = font3.render("{}%".format(pc.get("ENV_CONSTR_TRACK")["percent"]), True, basic_colors.WHITE)
+            self.window.blit(text3, (self.window.get_rect().center[0] - (text3.get_width()/2), 
+                            int(self.window.get_height()*0.65) ) )
+
+            pygame.display.flip()
+
+
+    def stop(self):
+        self.is_running = False
+        pass
+        # self._stopper.set()
+        
+    def stopped(self):
+        pass
+        # return self._stopper.isSet()
+
+        
 
 def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
 
@@ -40,6 +95,26 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
     info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+    
+    #LOADING
+    env = Env.Environment(main_surface_width, main_surface_height)
+    
+    thread_loading = DisplayLoadingThread()
+
+    thread_loading.start()
+
+    for i in range(nb_obs):
+        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
+        o.setRandomPose(main_surface_width, main_surface_height)
+        env.addObstacle(o)
+
+    env.constructEnvironment(5)
+
+    time.sleep(1)
+
+    thread_loading.stop()
+    thread_loading.join()
+
 
 
     DISPLAY_DEBUG = debug_displ
@@ -49,11 +124,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     PROFIL = _profiler != -1
     curr_profiler = 0
 
-    env = Env.Environment(main_surface_width, main_surface_height)
-
     clock = pygame.time.Clock()
 
     if DISPLAY:
+
         window = pygame.display.set_mode((screen_width, screen_height))
         caption = "Colony Life Simulation" + ("" if not PROFIL else " : Profiler n° {0}/{1}".format(number+1, max_number))
         pygame.display.set_caption(caption)
@@ -64,15 +138,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
         topleft_info = (topleft_screen[0]+main_surface_width, 0)
         info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
-    
-    for i in range(nb_obs):
-        o = entities.Obstacle(random.randint(30, 100), random.randint(30, 100), env)
-        o.setRandomPose(main_surface_width, main_surface_height)
-        env.addObstacle(o)
-    env.splitEnvironment()
-    env.constructGraph(Env.areNeigbhoursSquare)
-    env.constructRiver(5)
-
 
     l_npc = []
     for i in range(nb_npc):
@@ -125,6 +190,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     tinit = time.time() - tinit
     pc.set("TIME_INIT", tinit)
+
+    t_loop = 0.1
+
+    t_update_list = []
+    t_display_list = []
+    t_other_list = []
 
     while run:
 
@@ -273,6 +344,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             # print [x.name for x in selected_npc]
 
         t_other = time.time() - t_other
+        t_other_list.append(t_other)
+        if len(t_other_list) > 100:
+            t_other_list = t_other_list[1:]
 
         t_update = time.time()
         if PROFIL:
@@ -295,6 +369,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
+        t_update_list.append(t_update)
+        if len(t_update_list) > 100:
+            t_update_list = t_update_list[1:]
         if PROFIL:
             T_LOGIC = time.time() - T_LOGIC
             pc.append_to("TIME_LOGIC", T_LOGIC)
@@ -314,6 +391,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         pygame.draw.line(screen, basic_colors.RED, k, pos, 1)
                 for r in env.graph_rect:
                     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+                for ro in env.obstacles_rect:
+                    pygame.draw.rect(alpha_surface, basic_colors.ALPHA_MAGENTA, ro, 1)
+                for rv in env.saved_rect_from_river:
+                    pygame.draw.rect(alpha_surface, basic_colors.ALPHA_CYAN, rv, 1)
+
 
             #Display
 
@@ -341,13 +423,16 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 selection_rect.draw(alpha_surface)
 
             t_display = time.time() - t_display
+            t_display_list.append(t_display)
+            if len(t_display_list) > 100:
+                t_display_list = t_display_list[1:]
 
 
             #Info surface
             t2 = time.time()
-            diff_t = t2 - t1
+            diff_t = (t2 - t1) if (t2 - t1) > 0 else 0.0001
 
-            fps = round(1.0 / diff_t, 0)
+            fps = round(1.0 / t_loop, 0)
             q_time.append(round(fps))
             if len(q_time) >= 50 : q_time = q_time[1:]
 
@@ -359,12 +444,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             # text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
             tmp = int(round(np.mean(q_time)))
-            text = "{0:03d} LPS ({1:.3f}s/loop)".format(tmp, round(diff_t, 3))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
+            text = "{0:03d} LPS (~{1:.4f}s/loop)".format(tmp, round(diff_t, 4))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
             if paused:
                 text += " PAUSED"
             # text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
             text2 = "{0:03d}% logic, {1:03d}% display, {2:03d}% other".format(int(round((round(t_update, 4) / diff_t)*100)), int(round((round(t_display, 4) / diff_t)*100)), int(round((round(t_other, 4) / diff_t)*100)))
-            text3 = "Selected Entities (" + str(len(selected_npc)) + ") :"
+            text3 = "Selected Entities ({0}/{1}) :".format(str(len(selected_npc)), str(len(l_npc)))
             displ_text = font.render(text, True, basic_colors.BLACK)
             displ_text2 = font.render(text2, True, basic_colors.BLACK)
             displ_text3 = font.render(text3, True, basic_colors.BLACK)
@@ -377,7 +462,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
             # print (shift_list_ent_inf, shift_list_ent_sup)
-
             if shift_list_ent_inf > 0:
                 txt_dotdotdot = "..."
                 displ_dotdotdot = font.render(txt_dotdotdot, True, basic_colors.BLACK)
@@ -461,6 +545,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             T_TOTAL = time.time() - T_TOTAL
             pc.append_to("TIME_TOTAL", T_TOTAL)
+        t_loop = time.time() - t1
+
+        # min_time_loop = 0.002
+        # if t_loop < min_time_loop:
+        #     time.sleep(min_time_loop - t_loop)
+        #     t_loop = min_time_loop
+        #     print("sleep for {}".format(min_time_loop-t_loop))
 
     for e in l_npc:
         e.die()
@@ -475,4 +566,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=20, nb_obs=15, nb_spawner=3, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=80, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)

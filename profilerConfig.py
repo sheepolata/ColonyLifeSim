@@ -8,6 +8,7 @@ def clear():
         "TIME_DISPLAY" : [],
         "TIME_TOTAL" : [],
         "NB_NPC" : [],
+        "ENV_CONSTR_TRACK": {"scope":"none","current":0, "max":0, "percent":0.0},
         "TIME_INIT": 0
     }
     
@@ -24,6 +25,12 @@ def set(name, value):
     global profiler_config
     print(profiler_config[name], value)
     profiler_config[name] = value
+
+def setDict(name1, name2, value):
+    global profiler_config
+    if isinstance(profiler_config[name1], dict):
+        if name2 in profiler_config[name1].keys():
+            profiler_config[name1][name2] = value
 
 def get(name):
     global profiler_config
