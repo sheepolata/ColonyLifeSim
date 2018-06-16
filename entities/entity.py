@@ -3,13 +3,18 @@ import utils.basic_colors as basic_colors
 import behaviours.behaviour as behaviour
 import random
 import sprites.sprite
+import profilerConfig as pc
 
-import time 
+import threading
+
+import time
+import math
 
 import pygame
 
-class Entity(object):
+class Entity(threading.Thread):
     def __init__(self, env):
+        super(Entity, self).__init__()
         self.name = "Entity"
 
         self.pose = utils.Pose(0, 0)
@@ -18,6 +23,10 @@ class Entity(object):
         self.behaviour = None
 
         self.dead = False
+        self.paused = False
+        self.user_paused = False
+
+        self.running = True
 
         self.sprite = sprites.sprite.SpriteEntityBase(basic_colors.CYAN, self.pose)
 
@@ -26,12 +35,37 @@ class Entity(object):
         self.pose.y = y
         self.sprite = sprites.sprite.SpriteEntityBase(basic_colors.CYAN, self.pose)
 
+    def wait(self):
+        # time.sleep(t)
+        self.wait()
 
     def getPose(self):
         return self.pose.getPose()
 
     def setRandomPose(self, maxx, maxy):
         self.pose.setPose(random.randint(0, maxx), random.randint(0, maxy))
+
+    def run(self):
+        while self.running:
+            if not self.user_paused and not self.paused:
+                self.update()
+            ttw = 1.0/float(pc.get("FORCED_FPS")) if pc.get("FORCED_FPS") != 0 else 1
+            time.sleep(ttw)
+
+    def pause(self):
+        self.paused = True
+
+    def resume(self):
+        self.paused = False
+
+    def user_pause(self):
+        self.user_paused = True
+
+    def user_resume(self):
+        self.user_paused = False
+
+    def stop(self):
+        self.running = not self.running
 
     def update(self):
         # self.pose.setPose(x, y)
@@ -41,6 +75,7 @@ class Entity(object):
         print(self.name, "killed")
 
         self.dead = True
+        self.stop()
 
     def drawDebugCollision(self, surface):
         pass
@@ -118,36 +153,48 @@ class NPC(Entity):
             self.hunger = 0
 
     def setIdleBehaviour(self):
+        self.pause()
         if self.behaviour!= None and self.behaviour.state == "idle":
             return
         self.behaviour = None
         self.behaviour = behaviour.IdleBehaviour(self, self.env)
         self.behaviour.computePath()
+        self.resume()
 
     def setGOTOBehaviour(self, st):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.GOTOBehaviour(self, self.env, st)
         cp = self.behaviour.computePath()
+        self.resume()
 
 
     def setGOTORessource(self, res):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.GOTORessource(self, self.env, res)
         cp = self.behaviour.computePath()
+        self.resume()
 
     def setHarvestBehaviour(self, res):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.Harvest(self, self.env, res)
         self.behaviour.computePath()
+        self.resume()
 
     def setWaitBehaviour(self, time):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.Wait(self, self.env, time)
         self.behaviour.computePath()
+        self.resume()
 
     def setEmptyBehaviour(self):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.EmptyBehaviour(self, self.env)
+        self.resume()
 
     def setRandomPose(self, maxx, maxy):
         super(NPC, self).setRandomPose(maxx, maxy)
@@ -155,8 +202,10 @@ class NPC(Entity):
             super(NPC, self).setRandomPose(maxx, maxy)
             
     def setCollectFoodBehaviour(self):
+        self.pause()
         self.behaviour = None
         self.behaviour = behaviour.CollectFood(self, self.env)
+        self.resume()
 
     def drawDebugCollision(self, surface):
         super(NPC, self).drawDebugCollision(surface)
@@ -303,6 +352,8 @@ class Spawner(Entity):
         self.current_spawnee = 0
         self.list_ressource = []
 
+        self.angle = (float(2*math.pi) / self.max_spawnee)
+
         self.replenishable = rep
 
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
@@ -335,14 +386,13 @@ class Spawner(Entity):
         if self.sp_type == "foodspawner":
             res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
-            npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
-            npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
+            npx = self.pose.x + random.randint(int(self.radius*0.2), self.radius) * math.cos(self.angle * self.current_spawnee)
+            npy = self.pose.y + random.randint(int(self.radius*0.2), self.radius) * math.sin(self.angle * self.current_spawnee)
             asser = self.env.getCurrentRect((npx, npy))
             while asser == None:
-                # print "asser false"
-                npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
-                npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
-                asser = self.env.getCurrentRect((npx, npy))
+                self.angle += math.pi/12
+                npx = self.pose.x + random.randint(int(self.radius*0.2), self.radius) * math.cos(self.angle * self.current_spawnee)
+                npy = self.pose.y + random.randint(int(self.radius*0.2), self.radius) * math.sin(self.angle * self.current_spawnee)
 
             res.pose.x = npx
             res.pose.y = npy
@@ -351,4 +401,6 @@ class Spawner(Entity):
             self.env.addRessource(res)
             self.list_ressource.append(res)
             self.current_spawnee += 1
+
+            res.start()
         

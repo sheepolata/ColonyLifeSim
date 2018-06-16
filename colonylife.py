@@ -205,6 +205,28 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     t_display_list = []
     t_other_list = []
 
+    #Start Threads
+    [x.start() for x in l_npc]
+    [x.start() for x in l_spawner]
+
+    def handle_pause(paused):
+        if paused:
+            for e in l_npc:
+                e.user_pause()
+            for r in l_spawner:
+                r.user_pause()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.user_pause()
+        else:
+            for e in l_npc:
+                e.user_resume()
+            for r in l_spawner:
+                r.user_resume()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.user_resume()
+
     while run:
 
         t1 = time.time()
@@ -271,6 +293,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         info = not info
                     elif event.key == K_SPACE:
                         paused = not paused
+                        handle_pause(paused)
                     elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for e in l_npc:
                             e.selected_npc = True
@@ -296,6 +319,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             DISPLAY_DEBUG = not DISPLAY_DEBUG
                         elif pause_button.collidepoint(mp):
                             paused = not paused
+                            handle_pause(paused)  
                         elif info_button.collidepoint(mp):
                             info = not info
 
@@ -311,12 +335,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             rect = env.getCurrentRect(mp)
                             if rect != None:
                                 for e in selected_npc:
-                                    rect_e = env.getCurrentRect(e.getPose())
-                                    if e.behaviour.state == "goto":
-                                        e.behaviour.setSpecificTarget(mp)
-                                        e.behaviour.computePath()
-                                    else:
-                                        e.setGOTOBehaviour(mp)
+                                    e.pause()
+                                    e.setGOTOBehaviour(mp)
+                                    e.resume()
                     #Mouth Wheel up
                     if event.button == 4:
                         if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
@@ -360,21 +381,28 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         if PROFIL:
             T_LOGIC = time.time()
 
-        if not paused:
-            #Logic
-            #play each entity
-            for e in l_npc:
-                #slow as fuck
-                e.update()
-            for r in l_spawner:
-                r.update()
-            for kr in env.ressources.keys():
-                for r in env.ressources[kr]:
-                    r.update()
-                env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
+        # if not paused:
+        #     #Logic
+        #     #play each entity
+        #     for e in l_npc:
+        #         #slow as fuck
+        #         e.update()
+        #     for r in l_spawner:
+        #         r.update()
+            # for kr in env.ressources.keys():
+        #         for r in env.ressources[kr]:
+        #             r.update()
+        #         env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
 
-            #Remove dead entities
-            l_npc = [x for x in l_npc if not x.dead]
+        #Remove dead entities            
+        for kr in env.ressources.keys():
+            for deadres in [x for x in env.ressources[kr] if x.dead]:
+                deadres.join()
+            env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
+
+        for deadnpc in [x for x in l_npc if x.dead]:
+            deadnpc.join()
+        l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
         t_update_list.append(t_update)
@@ -452,6 +480,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             # text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
             tmp = int(round(np.mean(q_time)))
+            pc.set("FORCED_FPS", tmp)
             text = "{0:03d} LPS (~{1:.4f}s/loop)".format(tmp, round(diff_t, 4))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
             if paused:
                 text += " PAUSED"
@@ -486,7 +515,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-                txt_behaviour = "     state : " + e.behaviour.state
+                txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour != None else "none")
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
@@ -564,14 +593,20 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     for e in l_npc:
         e.die()
         e.update()
+        e.join()
+
+    for sp in l_spawner:
+        sp.die()
+        sp.join()
 
     for kr in env.ressources.keys():
         for r in env.ressources[kr]:
             r.die()
             r.update()
+            r.join( )
 
     print("End !")
 
 
 if __name__ == '__main__':
-    main(nb_npc=80, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=5, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False)
