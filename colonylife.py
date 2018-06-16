@@ -36,7 +36,7 @@ class DisplayLoadingThread(threading.Thread):
         
         pygame.init()
 
-        screen_width, screen_height = int(monitor.width), int(monitor.height)
+        screen_width, screen_height = int(monitor.width*0.9), int(monitor.height*0.9)
         self.window = pygame.display.set_mode((screen_width, screen_height))
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
 
@@ -99,7 +99,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     monitor = get_monitors()[0]
         
     # main_surface_width, main_surface_height = 860, 680
-    screen_width, screen_height = int(monitor.width), int(monitor.height)
+    screen_width, screen_height = int(monitor.width*0.9), int(monitor.height*0.9)
     main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
     info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
