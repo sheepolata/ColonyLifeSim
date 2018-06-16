@@ -237,11 +237,13 @@ class Obstacle(Entity):
 
 class Ressource(Entity):
     """docstring for Ressource"""
-    def __init__(self, env, name, value, rep):
+    def __init__(self, env, name, value, rep, spawner=None):
         super(Ressource, self).__init__(env)
         self.name = name
 
         self.used = False
+
+        self.spawner = spawner
 
         self.max_value = round(value*2.5, 2)
         if rep:
@@ -299,10 +301,9 @@ class Spawner(Entity):
 
         self.max_spawnee = maxs
         self.current_spawnee = 0
+        self.list_ressource = []
 
         self.replenishable = rep
-
-        self.list_ressource = []
 
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
     
@@ -332,10 +333,7 @@ class Spawner(Entity):
 
     def spawn(self):
         if self.sp_type == "foodspawner":
-            if not self.replenishable:
-                res = Ressource(self.env, "food", random.randint(int(25*self.factor), int(50*self.factor)), False)
-            else:
-                res = Ressource(self.env, "food", random.randint(int(50*self.factor), int(75*self.factor)), True)
+            res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
             npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
             npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)

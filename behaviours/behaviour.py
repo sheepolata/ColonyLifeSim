@@ -26,12 +26,10 @@ class Behaviour(object):
     def computePath(self, _target, _target_rect=None):
 
         current_rect = self.env.getCurrentRect(self.entity.getPose())
-        if current_rect == None:
-            # print("Error, no current rect found")
-            while current_rect == None:
-                self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
-                current_rect = self.env.getCurrentRect(self.entity.getPose())
-            # return -1
+        while current_rect == None:
+            self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
+            current_rect = self.env.getCurrentRect(self.entity.getPose())
+        # return -1
 
         if _target_rect == None:
             target_rect = self.env.getCurrentRect(_target)
