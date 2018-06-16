@@ -200,27 +200,24 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     #Start Threads
     [x.start() for x in l_npc]
     [x.start() for x in l_spawner]
-    # for kr in env.ressources.keys():
-    #     for r in env.ressources[kr]:
-    #         r.start()
 
     def handle_pause(paused):
         if paused:
             for e in l_npc:
-                e.pause()
+                e.user_pause()
             for r in l_spawner:
-                r.pause()
+                r.user_pause()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
-                    r.pause()
+                    r.user_pause()
         else:
             for e in l_npc:
-                e.resume()
+                e.user_resume()
             for r in l_spawner:
-                r.resume()
+                r.user_resume()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
-                    r.resume()
+                    r.user_resume()
 
     while run:
 
