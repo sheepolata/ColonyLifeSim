@@ -3,13 +3,17 @@ import utils.basic_colors as basic_colors
 import behaviours.behaviour as behaviour
 import random
 import sprites.sprite
+import profilerConfig as pc
+
+import threading
 
 import time 
 
 import pygame
 
-class Entity(object):
+class Entity(threading.Thread):
     def __init__(self, env):
+        super(Entity, self).__init__()
         self.name = "Entity"
 
         self.pose = utils.Pose(0, 0)
@@ -18,6 +22,9 @@ class Entity(object):
         self.behaviour = None
 
         self.dead = False
+        self.paused = False
+
+        self.running = True
 
         self.sprite = sprites.sprite.SpriteEntityBase(basic_colors.CYAN, self.pose)
 
@@ -33,6 +40,19 @@ class Entity(object):
     def setRandomPose(self, maxx, maxy):
         self.pose.setPose(random.randint(0, maxx), random.randint(0, maxy))
 
+    def run(self):
+        while self.running:
+            if not self.paused:
+                self.update()
+            ttw = 1.0/float(pc.get("FORCED_FPS")) if pc.get("FORCED_FPS") != 0 else 1
+            time.sleep(ttw)
+
+    def pause(self):
+        self.paused = not self.paused
+
+    def stop(self):
+        self.running = not self.running
+
     def update(self):
         # self.pose.setPose(x, y)
         self.sprite.update(self.pose)
@@ -41,6 +61,8 @@ class Entity(object):
         print(self.name, "killed")
 
         self.dead = True
+        self.stop()
+
 
     def drawDebugCollision(self, surface):
         pass
@@ -351,4 +373,6 @@ class Spawner(Entity):
             self.env.addRessource(res)
             self.list_ressource.append(res)
             self.current_spawnee += 1
+
+            res.start()
         
