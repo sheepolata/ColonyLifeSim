@@ -330,12 +330,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             rect = env.getCurrentRect(mp)
                             if rect != None:
                                 for e in selected_npc:
-                                    rect_e = env.getCurrentRect(e.getPose())
-                                    if e.behaviour.state == "goto":
-                                        e.behaviour.setSpecificTarget(mp)
-                                        e.behaviour.computePath()
-                                    else:
-                                        e.setGOTOBehaviour(mp)
+                                    e.pause()
+                                    e.setGOTOBehaviour(mp)
+                                    e.resume()
                     #Mouth Wheel up
                     if event.button == 4:
                         if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
@@ -607,4 +604,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=80, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=5, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False)

@@ -7,7 +7,8 @@ import profilerConfig as pc
 
 import threading
 
-import time 
+import time
+import math
 
 import pygame
 
@@ -33,6 +34,9 @@ class Entity(threading.Thread):
         self.pose.y = y
         self.sprite = sprites.sprite.SpriteEntityBase(basic_colors.CYAN, self.pose)
 
+    def wait(self):
+        # time.sleep(t)
+        self.wait()
 
     def getPose(self):
         return self.pose.getPose()
@@ -360,14 +364,8 @@ class Spawner(Entity):
         if self.sp_type == "foodspawner":
             res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
-            npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
-            npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
-            asser = self.env.getCurrentRect((npx, npy))
-            while asser == None:
-                # print "asser false"
-                npx = random.randint(self.pose.x - self.radius, self.pose.x + self.radius)
-                npy = random.randint(self.pose.y - self.radius, self.pose.y + self.radius)
-                asser = self.env.getCurrentRect((npx, npy))
+            npx = self.pose.x + random.randint(int(self.radius*0.2), self.radius) * math.cos((float(2*math.pi) / self.max_spawnee) * self.current_spawnee)
+            npy = self.pose.y + random.randint(int(self.radius*0.2), self.radius) * math.sin((float(2*math.pi) / self.max_spawnee) * self.current_spawnee)
 
             res.pose.x = npx
             res.pose.y = npy
