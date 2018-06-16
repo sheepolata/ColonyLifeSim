@@ -36,7 +36,7 @@ class DisplayLoadingThread(threading.Thread):
         
         pygame.init()
 
-        screen_width, screen_height = int(monitor.width*0.30), int(monitor.height*0.30)
+        screen_width, screen_height = int(monitor.width), int(monitor.height)
         self.window = pygame.display.set_mode((screen_width, screen_height))
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
 
@@ -53,21 +53,29 @@ class DisplayLoadingThread(threading.Thread):
 
             text1 = font.render("Loading...", True, basic_colors.WHITE)
             self.window.blit(text1, (self.window.get_rect().center[0] - (text1.get_width()/2),
-                            self.window.get_height()/4 ) )
+                            self.window.get_height()*0.17 ) )
 
-            fontsize2 = int(self.window.get_height()*0.15)
+            fontsize2 = int(self.window.get_height()*0.12)
             font2 = pygame.font.SysFont('Sans', fontsize2)
 
             text2 = font2.render(pc.get("ENV_CONSTR_TRACK")["scope"], True, basic_colors.WHITE)
             self.window.blit(text2, (self.window.get_rect().center[0] - (text2.get_width()/2), 
-                            int(self.window.get_height()*0.5) ) )
+                            int(self.window.get_height()*0.4) ) )
 
-            fontsize3 = int(self.window.get_height()*0.12)
+
+            max_load_rect = self.window.get_rect().width * 0.8
+            rect_load = pygame.Rect((self.window.get_rect().width*0.1, self.window.get_rect().height*0.7), (max_load_rect, 70))
+            rect_load_current = pygame.Rect((self.window.get_rect().width*0.1, self.window.get_rect().height*0.7), (int(max_load_rect*(pc.get("ENV_CONSTR_TRACK")["percent"]/100)), 70))
+            
+            fontsize3 = int(self.window.get_height()*0.05)
             font3 = pygame.font.SysFont('Sans', fontsize3)
 
+            pygame.draw.rect(self.window, basic_colors.WHITE, rect_load.inflate(5, 5), 5)
+            pygame.draw.rect(self.window, basic_colors.GREEN, rect_load_current)
+            
             text3 = font3.render("{}%".format(pc.get("ENV_CONSTR_TRACK")["percent"]), True, basic_colors.WHITE)
-            self.window.blit(text3, (self.window.get_rect().center[0] - (text3.get_width()/2), 
-                            int(self.window.get_height()*0.65) ) )
+            self.window.blit(text3, (rect_load.center[0] - (text3.get_width()/2), 
+                            rect_load.center[1] - (text3.get_height()/2) ) )
 
             pygame.display.flip()
 
@@ -91,7 +99,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     monitor = get_monitors()[0]
         
     # main_surface_width, main_surface_height = 860, 680
-    screen_width, screen_height = int(monitor.width*0.75), int(monitor.height*0.75)
+    screen_width, screen_height = int(monitor.width), int(monitor.height)
     main_surface_width, main_surface_height = int(screen_width*0.75), int(screen_height)
     info_surface_width, info_surface_height = int(screen_width*0.25), int(screen_height)
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
@@ -197,6 +205,28 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     t_display_list = []
     t_other_list = []
 
+    #Start Threads
+    [x.start() for x in l_npc]
+    [x.start() for x in l_spawner]
+
+    def handle_pause(paused):
+        if paused:
+            for e in l_npc:
+                e.user_pause()
+            for r in l_spawner:
+                r.user_pause()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.user_pause()
+        else:
+            for e in l_npc:
+                e.user_resume()
+            for r in l_spawner:
+                r.user_resume()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.user_resume()
+
     while run:
 
         t1 = time.time()
@@ -263,6 +293,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         info = not info
                     elif event.key == K_SPACE:
                         paused = not paused
+                        handle_pause(paused)
                     elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for e in l_npc:
                             e.selected_npc = True
@@ -288,6 +319,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             DISPLAY_DEBUG = not DISPLAY_DEBUG
                         elif pause_button.collidepoint(mp):
                             paused = not paused
+                            handle_pause(paused)  
                         elif info_button.collidepoint(mp):
                             info = not info
 
@@ -303,12 +335,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             rect = env.getCurrentRect(mp)
                             if rect != None:
                                 for e in selected_npc:
-                                    rect_e = env.getCurrentRect(e.getPose())
-                                    if e.behaviour.state == "goto":
-                                        e.behaviour.setSpecificTarget(mp)
-                                        e.behaviour.computePath()
-                                    else:
-                                        e.setGOTOBehaviour(mp)
+                                    e.pause()
+                                    e.setGOTOBehaviour(mp)
+                                    e.resume()
                     #Mouth Wheel up
                     if event.button == 4:
                         if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
@@ -352,21 +381,28 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         if PROFIL:
             T_LOGIC = time.time()
 
-        if not paused:
-            #Logic
-            #play each entity
-            for e in l_npc:
-                #slow as fuck
-                e.update()
-            for r in l_spawner:
-                r.update()
-            for kr in env.ressources.keys():
-                for r in env.ressources[kr]:
-                    r.update()
-                env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
+        # if not paused:
+        #     #Logic
+        #     #play each entity
+        #     for e in l_npc:
+        #         #slow as fuck
+        #         e.update()
+        #     for r in l_spawner:
+        #         r.update()
+            # for kr in env.ressources.keys():
+        #         for r in env.ressources[kr]:
+        #             r.update()
+        #         env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
 
-            #Remove dead entities
-            l_npc = [x for x in l_npc if not x.dead]
+        #Remove dead entities            
+        for kr in env.ressources.keys():
+            for deadres in [x for x in env.ressources[kr] if x.dead]:
+                deadres.join()
+            env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
+
+        for deadnpc in [x for x in l_npc if x.dead]:
+            deadnpc.join()
+        l_npc = [x for x in l_npc if not x.dead]
 
         t_update = time.time() - t_update
         t_update_list.append(t_update)
@@ -444,6 +480,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
             # text = str(round(np.mean(q_time))) + " fps (" +  str(round(diff_t, 3)) + "s)"
             tmp = int(round(np.mean(q_time)))
+            pc.set("FORCED_FPS", tmp)
             text = "{0:03d} LPS (~{1:.4f}s/loop)".format(tmp, round(diff_t, 4))#, len(str(tmp)) - len(str(int(tmp))) - 2 )
             if paused:
                 text += " PAUSED"
@@ -453,12 +490,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             displ_text = font.render(text, True, basic_colors.BLACK)
             displ_text2 = font.render(text2, True, basic_colors.BLACK)
             displ_text3 = font.render(text3, True, basic_colors.BLACK)
-            info_surface.blit(displ_text, (10, 10))
-            shift = 10
-            info_surface.blit(displ_text2, (10, 10 + shift))
-            shift = 10 + shift
-            info_surface.blit(displ_text3, (10, 20 + shift))
-            shift = 20 + shift
+            info_surface.blit(displ_text, (10, fontsize*1.2))
+            shift = fontsize*1.2
+            info_surface.blit(displ_text2, (10, fontsize*1.2 + shift))
+            shift = fontsize*1.2 + shift
+            info_surface.blit(displ_text3, (10, fontsize*2 + shift))
+            shift = fontsize*2 + shift
 
 
             # print (shift_list_ent_inf, shift_list_ent_sup)
@@ -478,7 +515,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-                txt_behaviour = "     state : " + e.behaviour.state
+                txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour != None else "none")
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
@@ -556,14 +593,20 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     for e in l_npc:
         e.die()
         e.update()
+        e.join()
+
+    for sp in l_spawner:
+        sp.die()
+        sp.join()
 
     for kr in env.ressources.keys():
         for r in env.ressources[kr]:
             r.die()
             r.update()
+            r.join( )
 
     print("End !")
 
 
 if __name__ == '__main__':
-    main(nb_npc=80, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=5, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False)

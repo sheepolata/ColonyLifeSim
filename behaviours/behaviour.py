@@ -26,12 +26,10 @@ class Behaviour(object):
     def computePath(self, _target, _target_rect=None):
 
         current_rect = self.env.getCurrentRect(self.entity.getPose())
-        if current_rect == None:
-            # print("Error, no current rect found")
-            while current_rect == None:
-                self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
-                current_rect = self.env.getCurrentRect(self.entity.getPose())
-            # return -1
+        while current_rect == None:
+            self.entity.setPose(self.entity.getPose()[0] + random.randint(-4, 4), self.entity.getPose()[1]+ random.randint(-4, 4))
+            current_rect = self.env.getCurrentRect(self.entity.getPose())
+        # return -1
 
         if _target_rect == None:
             target_rect = self.env.getCurrentRect(_target)
@@ -55,7 +53,7 @@ class Behaviour(object):
             mini = min(current_rect.center[0], target_rect.center[0])
             maxi = max(current_rect.center[0], target_rect.center[0])
 
-            for step_x in range(mini, maxi, 15):
+            for step_x in range(mini, maxi, 6):
                 y = a*step_x + b
                 if self.env.collideOneObstacle_Point((step_x, y)):
                     astar_needed = True
@@ -126,7 +124,7 @@ class EmptyBehaviour(Behaviour):
         super(EmptyBehaviour, self).__init__(entity, env)
         self.state = "empty"
         self.label = "EMP"
-        
+
     def computePath(self):
         return 1
 

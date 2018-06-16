@@ -92,6 +92,8 @@ class SpriteRessource(SpriteEntityBase):
             displ_text = font.render(text, True, basic_colors.BLACK)
             screen.blit(displ_text, self.rect.center)
 
+            pygame.draw.line(alpha_surface, basic_colors.ALPHA_WHITE, self.rect.center, self.ressource.spawner.sprite.rect.center)
+
 class SpriteSpawner(SpriteEntityBase):
     """docstring for SpriteRessource"""
     def __init__(self, spawner, pose):
