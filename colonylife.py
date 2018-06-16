@@ -204,6 +204,24 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     #     for r in env.ressources[kr]:
     #         r.start()
 
+    def handle_pause(paused):
+        if paused:
+            for e in l_npc:
+                e.pause()
+            for r in l_spawner:
+                r.pause()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.pause()
+        else:
+            for e in l_npc:
+                e.resume()
+            for r in l_spawner:
+                r.resume()
+            for kr in env.ressources.keys():
+                for r in env.ressources[kr]:
+                    r.resume()
+
     while run:
 
         t1 = time.time()
@@ -270,6 +288,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         info = not info
                     elif event.key == K_SPACE:
                         paused = not paused
+                        handle_pause(paused)
                     elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for e in l_npc:
                             e.selected_npc = True
@@ -295,14 +314,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             DISPLAY_DEBUG = not DISPLAY_DEBUG
                         elif pause_button.collidepoint(mp):
                             paused = not paused
-                            if paused:
-                                for e in l_npc:
-                                    e.pause()
-                                for r in l_spawner:
-                                    r.pause()
-                                for kr in env.ressources.keys():
-                                    for r in env.ressources[kr]:
-                                        r.pause()
+                            handle_pause(paused)  
                         elif info_button.collidepoint(mp):
                             info = not info
 
@@ -501,7 +513,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-                txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour.state != None else "none")
+                txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour != None else "none")
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))

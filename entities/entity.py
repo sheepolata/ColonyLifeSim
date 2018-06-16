@@ -48,7 +48,10 @@ class Entity(threading.Thread):
             time.sleep(ttw)
 
     def pause(self):
-        self.paused = not self.paused
+        self.paused = True
+
+    def resume(self):
+        self.paused = False
 
     def stop(self):
         self.running = not self.running
