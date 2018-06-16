@@ -238,13 +238,18 @@ class CollectFood(Behaviour):
             self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
             self.state = "collectfood:GTR"
         elif self.count_recomp_path == 0:
+
+            # if self.entity.name == "entity1" : print("{} recompute now !".format(self.entity.name))
+            t=time.time()
             old_tr, _target_rect = self.env.getClosestRessource(self.entity.getPose(), "food")
+            # if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
+            
             if self.entity.target_res != None and old_tr != None and self.entity.target_res != old_tr:
                 changed = True
                 self.entity.target_res = old_tr
                 self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
                 self.state = "collectfood:GTR"
-        
+
         if changed:
             self.gotobehaviour.computePath(_target_rect=_target_rect)
             self.path = self.gotobehaviour.path
