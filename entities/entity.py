@@ -9,6 +9,7 @@ import threading
 
 import time
 import math
+import copy
 
 import pygame
 
@@ -75,6 +76,8 @@ class Entity(threading.Thread):
         print(self.name, "killed")
 
         self.dead = True
+        self.resume()
+        self.user_resume()
         self.stop()
 
     def drawDebugCollision(self, surface):
@@ -123,7 +126,7 @@ class NPC(Entity):
         if self.hunger <= 0:
             self.have_to_eat = False
 
-        if self._tick%50 == 0:
+        if self._tick%10 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
@@ -363,6 +366,12 @@ class Spawner(Entity):
         while self.env.getCurrentRect(self.getPose()) == None or self.env.collideOneObstacle_Point(self.getPose()):
             super(Spawner, self).setRandomPose(maxx, maxy)
 
+    def start(self):
+        super(Spawner, self).start()
+
+    def die(self):
+        super(Spawner, self).die()
+
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
@@ -400,7 +409,4 @@ class Spawner(Entity):
             res.setRegrowBehaviour()
             self.env.addRessource(res)
             self.list_ressource.append(res)
-            self.current_spawnee += 1
-
-            res.start()
-        
+            self.current_spawnee += 1        

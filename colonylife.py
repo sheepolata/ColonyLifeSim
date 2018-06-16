@@ -146,6 +146,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
         topleft_info = (topleft_screen[0]+main_surface_width, 0)
         info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
+    
 
     l_npc = []
     for i in range(nb_npc):
@@ -154,6 +155,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         entity.setIdleBehaviour()
         l_npc.append(entity)
 
+    
     l_spawner = []
     for i in range(nb_spawner):
         spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 3, random.randint(540, 620), random.random()*0.6 + 0.8, True)
@@ -163,9 +165,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             spawnerFood.spawn()
         l_spawner.append(spawnerFood)
 
-
-
-    run = True
 
     #Buttons
     color_rect_button = basic_colors.BLUE
@@ -205,9 +204,14 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     t_display_list = []
     t_other_list = []
 
+    # print("wesh")
+
     #Start Threads
     [x.start() for x in l_npc]
     [x.start() for x in l_spawner]
+    for kr in env.ressources.keys():
+        for r in env.ressources[kr]:
+            r.start()
 
     def handle_pause(paused):
         if paused:
@@ -227,6 +231,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 for r in env.ressources[kr]:
                     r.user_resume()
 
+    run = True
     while run:
 
         t1 = time.time()
@@ -609,4 +614,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=20, nb_obs=5, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=5, nb_spawner=8, _profiler=-1, DISPLAY=True, debug_displ=False)
