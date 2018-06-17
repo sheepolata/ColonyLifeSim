@@ -53,7 +53,7 @@ class SpriteNPC(SpriteEntityBase):
     def drawSelected(self, screen, line_surface, color, entity):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
         
-        pygame.draw.circle(screen, color, self.rect.center, entity.vision_radius, 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, entity.vision_radius, 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)
@@ -61,11 +61,13 @@ class SpriteNPC(SpriteEntityBase):
         screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
         for n in self.npc.neighbours:
-            pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center)
-        for vr in self.npc.known_food:
-            pygame.draw.line(line_surface, basic_colors.ALPHA_LIME, self.rect.center, vr.sprite.rect.center)
+            if self.npc.isFriend(n):
+                pygame.draw.line(line_surface, basic_colors.ALPHA_LIME, self.rect.center, n.sprite.rect.center)
+            else:
+                pygame.draw.line(line_surface, basic_colors.ALPHA_RED, self.rect.center, n.sprite.rect.center)
+        for vr in self.npc.known_food.keys():
+            pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
-            
 
         if self.npc.behaviour != None:
             for p in range(1, len(self.npc.behaviour.path)):
@@ -73,7 +75,7 @@ class SpriteNPC(SpriteEntityBase):
                 # dep = self.npc.getPose()
                 arr = self.npc.behaviour.path[p]
                 # arr = self.npc.behaviour.target
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, dep, arr)
+                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
 
 
 
@@ -109,8 +111,6 @@ class SpriteSpawner(SpriteEntityBase):
         self.spawner = spawner
 
         color = basic_colors.WHITE
-        if self.spawner.name == "foodspawner":
-            color = basic_colors.LIME
 
         self.color_non_havestable = basic_colors.ALPHA_RED
 
@@ -120,10 +120,10 @@ class SpriteSpawner(SpriteEntityBase):
         if info:
             super(SpriteSpawner, self).draw(screen)
 
-            text = str(self.spawner.name)
-            font = pygame.font.SysFont('Sans', 10)
-            displ_text = font.render(text, True, basic_colors.BLACK)
-            screen.blit(displ_text, (self.rect.center[0]-self.size, self.rect.center[1]-self.size))
+            # text = str(self.spawner.name)
+            # font = pygame.font.SysFont('Sans', 10)
+            # displ_text = font.render(text, True, basic_colors.BLACK)
+            # screen.blit(displ_text, (self.rect.center[0]-self.size, self.rect.center[1]-self.size))
 
 
         

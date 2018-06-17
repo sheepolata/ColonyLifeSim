@@ -453,13 +453,19 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             #Entities
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
+                    r.pause()
                     r.sprite.draw(screen, alpha_surface, info)
+                    r.resume()
             for e in env.npcs:
+                e.pause()
                 e.sprite.draw(screen, False)
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED, e)
+                e.resume()
             for sp in env.spawners:
+                sp.pause()
                 sp.sprite.draw(screen, info)
+                sp.resume()
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
@@ -516,10 +522,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
                 displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
-                txt_stat1 = "     speed : " + str(e.speed)
+                txt_stat1 = "     speed : {}  memory : {}".format(str(e.speed), str(e.memory))
                 displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
 
-                txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
+                # txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
+                txt_hunger = "     hunger : {}/{} - kind : {} cour : {}".format(str(e.hunger), str(e.hunger_max), str(e.kindness), str(e.courage))
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
                 txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour != None else "none")
@@ -604,6 +611,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     for sp in env.spawners:
         sp.die()
+        sp.update()
         sp.join()
 
     for kr in env.ressources.keys():

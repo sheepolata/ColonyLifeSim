@@ -100,7 +100,6 @@ class NPC(Entity):
 
         self.selected = False
 
-        self.vision_radius = 150
 
         self.count_check_availaible_food = 0
         self.count_check_availaible_food_period = 50
@@ -110,36 +109,53 @@ class NPC(Entity):
 
         #vital monitoring
         self.hunger = 0.0
-        self.hunger_thresh = random.randint(40, 60)
-        self.hunger_max = self.hunger_thresh + 50
+        self.hunger_thresh = random.randint(60, 80)
+        self.hunger_max = self.hunger_thresh + 30
         self.have_to_eat = False
 
         self.harvester = random.random()*0.8 + 0.4
 
+        self.vision_radius = 150
+
+        #MEMORY and SOCIAL
+
         self.neighbours = []
-        self.known_food = []
+        self.memory = random.randint(800, 1200)
+        self.known_food = {}
+
+        #cowardliness 0 ... 10 courage
+        # self.courage = round(random.random()*10, 2)
+        self.courage = random.choice([0, 1])
+        #kindness 0 ... 10 aggressivness
+        # self.kindness = round(random.random()*10, 2)
+        self.kindness = random.choice([0, 1])
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
 
-        # self.init()
 
     def init(self):
         self._ticker = utils.perpetualTimer(1, self.tick)
         self._ticker.start()
 
-    def tick(self):
-        if self.hunger <= 0:
-            self.have_to_eat = False
+    def isFriend(self, other):
+        return other.kindness == self.kindness
 
-        if self._tick%10 == 0:
+    def tick(self):
+        if self.hunger <= self.hunger_max*0.1:
+            self.have_to_eat = False
+        elif self.hungry():
+            self.have_to_eat = True
+
+        if self._tick%50 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
 
+        self.updateFoodMemory()
         if self._tick%50 == 0:
             self.computeNeighbours()
-            self.computeVisibleFood()
+            self.computeKnownFood()
 
         self._tick += 1
         if self._tick%1000 == 0:
@@ -233,8 +249,6 @@ class NPC(Entity):
 
         if self.dead:
             return
-        if self.hungry():
-            self.have_to_eat = True
 
         if self.have_to_eat:
             # print self.behaviour.label
@@ -246,7 +260,7 @@ class NPC(Entity):
                 self.consumeFood()
             elif self.behaviour.label != "COFO":
                 if self.count_check_availaible_food == 0:
-                    res, _tar_res = self.env.getClosestRessourceFromList(self.getPose(), self.known_food)
+                    res, _tar_res = self.env.getClosestRessourceFromList(self.getPose(), self.known_food.keys())
                     if res != None:
                         self.count_check_availaible_food = 0
                         self.count_check_availaible_food_period = 50
@@ -291,13 +305,20 @@ class NPC(Entity):
             elif npc in self.neighbours:
                 self.neighbours.remove(npc)
 
-    def computeVisibleFood(self):
+    def updateFoodMemory(self):
+        torm = []
+        for k in self.known_food.keys():
+            self.known_food[k] += 1
+            if self.known_food[k] >= self.memory:
+                torm.append(k)
+        for k in torm:
+            del self.known_food[k]
+
+    def computeKnownFood(self):
         for f in self.env.ressources["food"]:
             if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
-                if not f in self.known_food:
-                    self.known_food.append(f)
-            # elif f in self.known_food:
-            #     self.known_food.remove(f)
+                self.known_food[f] = 0
+
 
 
 
