@@ -202,24 +202,32 @@ class CollectFood(Behaviour):
         pass    
 
     def nextStep(self):
-        self.count_recomp_path = (self.count_recomp_path+1)%180
+        self.count_recomp_path = (self.count_recomp_path+1)%360
 
         changed = False
         _target_rect = None
         # print self.entity.target_res
-        if self.entity.target_res == None:
+        if self.entity.target_res == None or not self.entity.target_res.harvestable:
             changed = True
-            self.entity.target_res, _target_rect = self.env.getClosestRessource(self.entity.getPose(), "food")
+
+            # t=time.time()
+            # if self.entity.name == "entity1" : print("{} get ressource !".format(self.entity.name))
+
+            self.entity.target_res, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), self.entity.known_food)
+            
+            # if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
+            
             if self.entity.target_res == None:
                 return 1
             self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
             self.state = "collectfood:GTR"
-        elif self.count_recomp_path == 0:
-
+        elif self.count_recomp_path == -1:
             t=time.time()
-            if self.entity.name == "entity1" : print("{} recompute now !".format(self.entity.name))
-            old_tr, _target_rect = self.env.getClosestRessource(self.entity.getPose(), "food")
-            if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
+            # if self.entity.name == "entity1" : print("{} recompute now !".format(self.entity.name))
+
+            old_tr, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), "food", approx=False)
+
+            # if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
             
             if self.entity.target_res != None and old_tr != None and self.entity.target_res != old_tr:
                 changed = True

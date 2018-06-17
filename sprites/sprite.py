@@ -50,13 +50,22 @@ class SpriteNPC(SpriteEntityBase):
             displ_text = font.render(text, True, basic_colors.BLACK)
             screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
-    def drawSelected(self, screen, line_surface, color):
+    def drawSelected(self, screen, line_surface, color, entity):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
+        
+        pygame.draw.circle(screen, color, self.rect.center, entity.vision_radius, 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)
         displ_text = font.render(text, True, basic_colors.BLACK)
         screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
+
+        for n in self.npc.neighbours:
+            pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center)
+        for vr in self.npc.known_food:
+            pygame.draw.line(line_surface, basic_colors.ALPHA_LIME, self.rect.center, vr.sprite.rect.center)
+
+            
 
         if self.npc.behaviour != None:
             for p in range(1, len(self.npc.behaviour.path)):

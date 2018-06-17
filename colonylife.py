@@ -165,6 +165,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             spawnerFood.spawn(start_thread=False)
         l_spawner.append(spawnerFood)
 
+    env.setNPCs(l_npc)
+    env.setSpawners(l_spawner)
 
     #Buttons
     color_rect_button = basic_colors.BLUE
@@ -207,25 +209,25 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     # print("wesh")
 
     #Start Threads
-    [x.start() for x in l_npc]
-    [x.start() for x in l_spawner]
+    [x.start() for x in env.npcs]
+    [x.start() for x in env.spawners]
     for kr in env.ressources.keys():
         for r in env.ressources[kr]:
             r.start()
 
     def handle_pause(paused):
         if paused:
-            for e in l_npc:
+            for e in env.npcs:
                 e.user_pause()
-            for r in l_spawner:
+            for r in env.spawners:
                 r.user_pause()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
                     r.user_pause()
         else:
-            for e in l_npc:
+            for e in env.npcs:
                 e.user_resume()
-            for r in l_spawner:
+            for r in env.spawners:
                 r.user_resume()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
@@ -239,7 +241,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             T_TOTAL = time.time()
 
             if curr_profiler%500 == 0:
-                pc.append_to("NB_NPC", len(l_npc))
+                pc.append_to("NB_NPC", len(env.npcs))
             curr_profiler += 1
             if curr_profiler%10 == 0:
                 print(str(round(float(curr_profiler)/float(_profiler) * 100)) + "% (" + str(curr_profiler) + "/" + str(_profiler) + ")", end='\r')
@@ -300,15 +302,15 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         paused = not paused
                         handle_pause(paused)
                     elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        for e in l_npc:
+                        for e in env.npcs:
                             e.selected_npc = True
-                        selected_npc = l_npc
+                        selected_npc = env.npcs
                         shift_list_ent_inf = 0
                         shift_list_ent_sup = shift_list_ent_span
                     elif event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        for e in l_npc:
+                        for e in env.npcs:
                             e.selected_npc = True
-                        selected_npc = copy.copy(l_npc)
+                        selected_npc = copy.copy(env.npcs)
                         np.random.shuffle(selected_npc)
                         selected_npc = selected_npc[:shift_list_ent_span]
 
@@ -367,7 +369,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             for e in selected_npc:
                                 e.selected_npc = False
                             selected_npc = []
-                            for e in l_npc:
+                            for e in env.npcs:
                                 if selection_rect.colliderect(e.sprite.rect):
                                     e.selected_npc = True
                                     selected_npc.append(e)
@@ -389,10 +391,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         # if not paused:
         #     #Logic
         #     #play each entity
-        #     for e in l_npc:
+        #     for e in env.npcs:
         #         #slow as fuck
         #         e.update()
-        #     for r in l_spawner:
+        #     for r in env.spawners:
         #         r.update()
             # for kr in env.ressources.keys():
         #         for r in env.ressources[kr]:
@@ -405,9 +407,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 deadres.join()
             env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
 
-        for deadnpc in [x for x in l_npc if x.dead]:
+        for deadnpc in [x for x in env.npcs if x.dead]:
             deadnpc.join()
-        l_npc = [x for x in l_npc if not x.dead]
+        env.npcs = [x for x in env.npcs if not x.dead]
 
         t_update = time.time() - t_update
         t_update_list.append(t_update)
@@ -452,11 +454,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
                     r.sprite.draw(screen, alpha_surface, info)
-            for e in l_npc:
+            for e in env.npcs:
                 e.sprite.draw(screen, False)
                 if e in selected_npc:
-                    e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
-            for sp in l_spawner:
+                    e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED, e)
+            for sp in env.spawners:
                 sp.sprite.draw(screen, info)
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
@@ -491,7 +493,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 text += " PAUSED"
             # text2 = str(round((round(t_update, 4) / diff_t)*100)) + "% logic, " + str(round((round(t_display, 4) / diff_t)*100)) + "% disp, " + str(round((round(t_other, 4) / diff_t)*100)) + "% otr"
             text2 = "{0:03d}% logic, {1:03d}% display, {2:03d}% other".format(int(round((round(t_update, 4) / diff_t)*100)), int(round((round(t_display, 4) / diff_t)*100)), int(round((round(t_other, 4) / diff_t)*100)))
-            text3 = "Selected Entities ({0}/{1}) :".format(str(len(selected_npc)), str(len(l_npc)))
+            text3 = "Selected Entities ({0}/{1}) :".format(str(len(selected_npc)), str(len(env.npcs)))
             displ_text = font.render(text, True, basic_colors.BLACK)
             displ_text2 = font.render(text2, True, basic_colors.BLACK)
             displ_text3 = font.render(text3, True, basic_colors.BLACK)
@@ -595,12 +597,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         #     t_loop = min_time_loop
         #     print("sleep for {}".format(min_time_loop-t_loop))
 
-    for e in l_npc:
+    for e in env.npcs:
         e.die()
         e.update()
         e.join()
 
-    for sp in l_spawner:
+    for sp in env.spawners:
         sp.die()
         sp.join()
 

@@ -4,6 +4,7 @@ import behaviours.behaviour as behaviour
 import random
 import sprites.sprite
 import profilerConfig as pc
+import utils.pathfinding as pf
 
 import threading
 
@@ -99,8 +100,10 @@ class NPC(Entity):
 
         self.selected = False
 
+        self.vision_radius = 150
+
         self.count_check_availaible_food = 0
-        self.count_check_availaible_food_period = 100
+        self.count_check_availaible_food_period = 50
 
         #Inventory
         self.bagpack = {}
@@ -112,6 +115,9 @@ class NPC(Entity):
         self.have_to_eat = False
 
         self.harvester = random.random()*0.8 + 0.4
+
+        self.neighbours = []
+        self.known_food = []
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
@@ -130,6 +136,10 @@ class NPC(Entity):
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
+
+        if self._tick%50 == 0:
+            self.computeNeighbours()
+            self.computeVisibleFood()
 
         self._tick += 1
         if self._tick%1000 == 0:
@@ -236,10 +246,10 @@ class NPC(Entity):
                 self.consumeFood()
             elif self.behaviour.label != "COFO":
                 if self.count_check_availaible_food == 0:
-                    res, _tar_res = self.env.getClosestRessource(self.getPose(), "food")
+                    res, _tar_res = self.env.getClosestRessourceFromList(self.getPose(), self.known_food)
                     if res != None:
                         self.count_check_availaible_food = 0
-                        self.count_check_availaible_food_period = 100
+                        self.count_check_availaible_food_period = 50
                         self.setCollectFoodBehaviour()
                     else:
                         self.count_check_availaible_food_period = min(self.count_check_availaible_food_period+50, 1500)
@@ -271,6 +281,24 @@ class NPC(Entity):
     def setPose(self, x, y):
         super(NPC, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
+
+    def computeNeighbours(self):
+        # self.neighbours = []
+        for npc in self.env.npcs:
+            if not pf.checkStraightPath(self.env, self.getPose(), npc.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), npc.getPose()) <= self.vision_radius:
+                if not npc in self.neighbours:
+                    self.neighbours.append(npc)
+            elif npc in self.neighbours:
+                self.neighbours.remove(npc)
+
+    def computeVisibleFood(self):
+        for f in self.env.ressources["food"]:
+            if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
+                if not f in self.known_food:
+                    self.known_food.append(f)
+            # elif f in self.known_food:
+            #     self.known_food.remove(f)
+
 
 
 class Obstacle(Entity):
@@ -307,8 +335,11 @@ class Ressource(Entity):
         self.replen_rate = round(random.random()*0.45 + 0.33, 2)
         self.harvestable = True
 
+
         randpose = self.env.getRandomValidPose()
         self.pose = utils.Pose(randpose[0], randpose[1])
+
+        self.rect = env.getCurrentRect(self.getPose())
 
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
         
@@ -317,6 +348,7 @@ class Ressource(Entity):
 
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
+        self.rect = env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
 
     def update(self):
@@ -355,6 +387,8 @@ class Spawner(Entity):
         self.current_spawnee = 0
         self.list_ressource = []
 
+        self.rect = env.getCurrentRect(self.getPose())
+
         self.angle = (float(2*math.pi) / self.max_spawnee)
 
         self.replenishable = rep
@@ -374,6 +408,7 @@ class Spawner(Entity):
 
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
+        self.rect = env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
 
     def setSpawnerBehaviour(self):
