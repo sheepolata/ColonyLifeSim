@@ -17,6 +17,8 @@ import pygame
 class Entity(threading.Thread):
     def __init__(self, env):
         super(Entity, self).__init__()
+        self.daemon = False
+
         self.name = "Entity"
 
         self.pose = utils.Pose(0, 0)
@@ -140,6 +142,29 @@ class NPC(Entity):
 
     def isFriend(self, other):
         return other.kindness == self.kindness
+
+    def computeNeighbours(self):
+        # self.neighbours = []
+        for npc in self.env.npcs:
+            if not pf.checkStraightPath(self.env, self.getPose(), npc.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), npc.getPose()) <= self.vision_radius:
+                if not npc in self.neighbours:
+                    self.neighbours.append(npc)
+            elif npc in self.neighbours:
+                self.neighbours.remove(npc)
+
+    def updateFoodMemory(self):
+        torm = []
+        for k in self.known_food.keys():
+            self.known_food[k] += 1
+            if self.known_food[k] >= self.memory:
+                torm.append(k)
+        for k in torm:
+            del self.known_food[k]
+
+    def computeKnownFood(self):
+        for f in self.env.ressources["food"]:
+            if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
+                self.known_food[f] = 0
 
     def tick(self):
         if self.hunger <= self.hunger_max*0.1:
@@ -295,32 +320,6 @@ class NPC(Entity):
     def setPose(self, x, y):
         super(NPC, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
-
-    def computeNeighbours(self):
-        # self.neighbours = []
-        for npc in self.env.npcs:
-            if not pf.checkStraightPath(self.env, self.getPose(), npc.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), npc.getPose()) <= self.vision_radius:
-                if not npc in self.neighbours:
-                    self.neighbours.append(npc)
-            elif npc in self.neighbours:
-                self.neighbours.remove(npc)
-
-    def updateFoodMemory(self):
-        torm = []
-        for k in self.known_food.keys():
-            self.known_food[k] += 1
-            if self.known_food[k] >= self.memory:
-                torm.append(k)
-        for k in torm:
-            del self.known_food[k]
-
-    def computeKnownFood(self):
-        for f in self.env.ressources["food"]:
-            if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
-                self.known_food[f] = 0
-
-
-
 
 class Obstacle(Entity):
     def __init__(self, sizew, sizeh, env):

@@ -82,12 +82,12 @@ class DisplayLoadingThread(threading.Thread):
 
     def stop(self):
         self.is_running = False
-        pass
+        print("stop Loading display")
         # self._stopper.set()
-        
-    def stopped(self):
-        pass
-        # return self._stopper.isSet()
+
+    def join(self):
+        print("join Loading display")
+        super(DisplayLoadingThread, self).join()
 
         
 
@@ -618,7 +618,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         for r in env.ressources[kr]:
             r.die()
             r.update()
-            r.join( )
+            r.join()
 
     print("End !")
 

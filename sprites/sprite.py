@@ -69,7 +69,7 @@ class SpriteNPC(SpriteEntityBase):
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
 
-        if self.npc.behaviour != None:
+        if self.npc.behaviour != None and len(self.npc.behaviour.path) >= 2:
             for p in range(1, len(self.npc.behaviour.path)):
                 dep = self.npc.behaviour.path[p-1]
                 # dep = self.npc.getPose()
