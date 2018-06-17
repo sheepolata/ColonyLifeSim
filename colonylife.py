@@ -614,4 +614,4 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(nb_npc=20, nb_obs=5, nb_spawner=8, _profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=20, nb_obs=5, nb_spawner=4, _profiler=-1, DISPLAY=True, debug_displ=False)
