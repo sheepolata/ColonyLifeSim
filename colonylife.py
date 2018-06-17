@@ -118,7 +118,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     env.constructEnvironment(5)
 
-    time.sleep(1)
+    # time.sleep(1)
 
     thread_loading.stop()
     thread_loading.join()
@@ -162,7 +162,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         spawnerFood.setRandomPose(main_surface_width, main_surface_height)
         spawnerFood.setSpawnerBehaviour()
         for i in range(1):
-            spawnerFood.spawn()
+            spawnerFood.spawn(start_thread=False)
         l_spawner.append(spawnerFood)
 
 

@@ -391,7 +391,7 @@ class Spawner(Entity):
             # print(str(self.current_spawnee) + "/" + str(self.max_spawnee))
         super(Spawner, self).update()
 
-    def spawn(self):
+    def spawn(self, start_thread=True):
         if self.sp_type == "foodspawner":
             res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
@@ -409,4 +409,6 @@ class Spawner(Entity):
             res.setRegrowBehaviour()
             self.env.addRessource(res)
             self.list_ressource.append(res)
-            self.current_spawnee += 1        
+            self.current_spawnee += 1
+
+            if start_thread : res.start()     

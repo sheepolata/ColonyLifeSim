@@ -1,4 +1,6 @@
-
+import geometry as geo
+import time
+import utils
 
 #_start and _goal here are Coordinates
 def heuristic_cost_estimate(_current, _goal):
@@ -94,5 +96,43 @@ def computePathLength(env, path):
     return res
 
 def getPathLength(env, pose1, pose2):
-    path = astar(pose1, pose2, env)
-    return computePathLength(env, path)
+    #NEW BUT NOT GOOD
+    # astar_needed = checkStraightPath(env, pose1, pose2, 2)
+    # if astar_needed:
+    #     path = astar(pose1, pose2, env)
+    #     res = computePathLength(env, path)
+    # else:
+    #     res = utils.distance2p(pose1, pose2)
+
+    #OLD
+    # path = astar(pose1, pose2, env)
+    # res = computePathLength(env, path)
+
+    return utils.distance2p(pose1, pose2)
+
+def checkStraightPath(env, current_rect_center, target_rect_center, precision):
+    #if line from entity.pos to target is OK, do not compute astar
+        #y = a*x + b => a==0 : parallele; a==inf : perpendicular; a == (-)1 : (-)45deg
+    a, b = geo.computeLineEquation(current_rect_center, target_rect_center)
+    astar_needed = False
+    if a == None or b == None:
+        astar_needed = True
+    elif abs(current_rect_center[0] - target_rect_center[0]) > abs(current_rect_center[1] - target_rect_center[1]):
+        mini = min(current_rect_center[0], target_rect_center[0])
+        maxi = max(current_rect_center[0], target_rect_center[0])
+
+        for step_x in range(mini, maxi, precision):
+            y = a*step_x + b
+            if env.collideOneObstacle_Point((step_x, y)):
+                astar_needed = True
+    else:
+        mini = min(current_rect_center[1], target_rect_center[1])
+        maxi = max(current_rect_center[1], target_rect_center[1])
+
+        for step_y in range(mini, maxi, 15):
+            # y = a*step_x + b
+            x = (step_y - b)/a
+            if env.collideOneObstacle_Point((x, step_y)):
+                astar_needed = True
+
+    return astar_needed

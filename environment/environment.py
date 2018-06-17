@@ -7,6 +7,7 @@ import pygame
 import math
 import random 
 import copy
+import time
 
 import numpy as np
 
@@ -63,6 +64,7 @@ class Environment(object):
         mini = float("inf")
         ok = None
         rect_ok = None
+        # t=time.time()
         for cand in [x for x in self.ressources[resname] if (x.harvestable and not x.used)]:
             # dist = utils.distance2p(pose, cand.getPose())
             cand_rect = self.getCurrentRect(cand.getPose())
@@ -76,6 +78,7 @@ class Environment(object):
                 ok = cand
                 rect_ok = cand_rect
                 mini = dist
+        # print("{}s".format(time.time()-t))
         return ok, rect_ok
 
     def getRandomValidPose(self):
