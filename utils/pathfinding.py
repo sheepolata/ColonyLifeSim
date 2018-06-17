@@ -4,7 +4,8 @@ import utils
 
 #_start and _goal here are Coordinates
 def heuristic_cost_estimate(_current, _goal):
-    res = 10 * (abs(_current[0] - _goal[0]) + abs(_current[1] - _goal[1]))
+    # res = 10 * (abs(_current[0] - _goal[0]) + abs(_current[1] - _goal[1]))
+    res = utils.distance2p(_current, _goal)
     return res
 
 def astar(_start, _goal, env):
@@ -105,10 +106,11 @@ def getPathLength(env, pose1, pose2):
     #     res = utils.distance2p(pose1, pose2)
 
     #OLD
-    # path = astar(pose1, pose2, env)
-    # res = computePathLength(env, path)
-
-    return utils.distance2p(pose1, pose2)
+    path = astar(pose1, pose2, env)
+    res = computePathLength(env, path)
+    return res
+    
+    # return utils.distance2p(pose1, pose2)
 
 def checkStraightPath(env, current_rect_center, target_rect_center, precision):
     #if line from entity.pos to target is OK, do not compute astar
