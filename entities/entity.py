@@ -124,6 +124,7 @@ class NPC(Entity):
         #MEMORY and SOCIAL
 
         self.neighbours = []
+        self.neighbours_rect = []
         self.memory = random.randint(800, 1200)
         self.known_food = {}
 

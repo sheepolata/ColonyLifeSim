@@ -48,6 +48,7 @@ class NeighboursComputationThread(threading.Thread):
         for focus in self.env.npcs:
             if not focus in self.neighbours.keys(): self.neighbours[focus] = []
             rects = self.env.pgo_obj.getRectInRangeStrict(focus)
+            focus.neighbours_rect = rects
             
             # rectslimit = self.env.pgo_obj.getRectInRangeLimit(focus)
             # rects.extend(rectslimit)

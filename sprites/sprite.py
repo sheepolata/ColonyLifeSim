@@ -2,6 +2,8 @@ import pygame
 import utils.basic_colors as basic_colors
 from pygame.locals import *
 
+import copy
+
 
 class SpriteEntityBase(object):
     """docstring for SpriteEntityBase"""
@@ -74,11 +76,12 @@ class SpriteNPC(SpriteEntityBase):
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
 
-        if self.npc.behaviour != None and len(self.npc.behaviour.path) >= 2:
-            for p in range(1, len(self.npc.behaviour.path)):
-                dep = self.npc.behaviour.path[p-1]
+        current_path = copy.copy(self.npc.behaviour.path)
+        if self.npc.behaviour != None and len(current_path) >= 2:
+            for p in range(1, len(current_path)):
+                dep = current_path[p-1]
                 # dep = self.npc.getPose()
-                arr = self.npc.behaviour.path[p]
+                arr = current_path[p]
                 # arr = self.npc.behaviour.target
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
 
