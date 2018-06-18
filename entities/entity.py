@@ -171,6 +171,10 @@ class NPC(Entity):
         #         self.known_food[f] = 0
 
     def tick(self):
+
+        if self._tick%10 == 0:
+            self.env.pgo_obj.updatePosition(self)
+
         if self.hunger <= self.hunger_max*0.1:
             self.have_to_eat = False
         elif self.hungry():
@@ -345,6 +349,8 @@ class Ressource(Entity):
         super(Ressource, self).__init__(env)
         self.name = name
 
+        self._tick = 0
+
         self.used = False
 
         self.spawner = spawner
@@ -366,6 +372,8 @@ class Ressource(Entity):
         self.rect = env.getCurrentRect(self.getPose())
 
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
+
+        self.env.pgo_obj.updateFoodPosition(self)
         
     def setRegrowBehaviour(self):
         self.behaviour = behaviour.RegrowBehaviour(self, self.env, 50)
@@ -375,7 +383,14 @@ class Ressource(Entity):
         self.rect = env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
 
+        self.env.pgo_obj.updateFoodPosition(self)
+
     def update(self):
+        self._tick = (self._tick+1)%1000
+        if self._tick%500 == 0:
+            self.env.pgo_obj.updateFoodPosition(self)
+
+
         if self.behaviour != None:
             ns = self.behaviour.nextStep()
         super(Ressource, self).update()

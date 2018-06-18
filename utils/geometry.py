@@ -25,8 +25,12 @@
 
 from __future__ import division
 from pygame import Rect
+import numpy as np
 from numpy import ones,vstack
 from numpy.linalg import lstsq
+import math
+
+import utils
 
 def computeLineEquation(p1, p2):
     if p1 == p2:
@@ -163,6 +167,35 @@ def calculateIntersectPoint(p1, p2, p3, p4):
         return None
         
         
+def circleContainsRect(c_center, c_radius, rect):
+    dx = max(c_center[0] - rect.left, rect.right - c_center[0]); 
+    dy = max(c_center[1] - rect.top, rect.bottom - c_center[1]);
+    return c_radius*c_radius >= dx*dx + dy*dy, (dx, dy)
+
+def circleIntersectRect(c_center, c_radius, rect):
+    angle = math.atan2(c_center[1] - rect.center[1], c_center[0] - rect.center[0]) + math.pi
+    
+    a_min = angle - math.pi/6
+    a_max = angle + math.pi/6
+
+    for a in np.arange(a_min, a_max, math.pi/24):
+        x = c_center[0] + c_radius * math.cos(a)
+        y = c_center[1] + c_radius * math.sin(a)
+        if rect.collidepoint((x, y)):
+            return True
+
+    return False
+
+def circleIntersectRect2(c_center, c_radius, rect):
+    # nearestX = max(rect.left, min(c_center[0], rect.left + rect.width));
+    # nearestY = max(rect.top, min(c_center[1], rect.top + rect.height));
+
+    nearestX = max(rect.left, min(c_center[0], rect.right));
+    nearestY = max(rect.bottom, min(c_center[1], rect.top));
+
+    return utils.distance2p(c_center, (nearestX, nearestY)) <= c_radius
+
+
 # Test script below...
 if __name__ == "__main__":
 

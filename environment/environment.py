@@ -14,6 +14,7 @@ import numpy as np
 import utils.utils as utils
 import utils.pathfinding as pf
 import profilerConfig as pc
+import positionnalgridoverlay as pgo
 
 class Environment(object):
     """docstring for Environment"""
@@ -41,6 +42,8 @@ class Environment(object):
 
 
         self.loading = 0
+
+        self.pgo_obj = pgo.PositionnalGridOverlay(self, 20)
 
     def setNPCs(self, npcs):
         self.npcs = npcs

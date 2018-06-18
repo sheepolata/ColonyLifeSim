@@ -6,6 +6,7 @@ from __future__ import print_function
 import entities.entity as entities
 import entities.computationthread as ct
 import environment.environment as Env
+import environment.positionnalgridoverlay as pgo
 import behaviours.behaviour as behaviour
 
 import utils.pathfinding as pf
@@ -121,6 +122,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     env.constructEnvironment(5)
 
+    # pgo_obj = pgo.PositionnalGridOverlay(env, 20)
+
     # time.sleep(1)
 
     thread_loading.stop()
@@ -129,6 +132,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
 
     DISPLAY_DEBUG = debug_displ
+    DISPLAY_OVERLAY = False
 
     pygame.init()
 
@@ -177,6 +181,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     for npc in env.npcs:
         npc.setNeigh_computation_thread(NCT)
         npc.setClosestfood_computation_thread(CFCT)
+        env.pgo_obj.updatePosition(npc)
+
+    
 
     #Buttons
     color_rect_button = basic_colors.BLUE
@@ -310,6 +317,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
                     elif event.key == K_i:
                         info = not info
+                    elif event.key == K_o:
+                        DISPLAY_OVERLAY = not DISPLAY_OVERLAY
                     elif event.key == K_SPACE:
                         paused = not paused
                         handle_pause(paused)
@@ -402,9 +411,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         if len(t_other_list) > 100:
             t_other_list = t_other_list[1:]
 
+        #Logic
         t_update = time.time()
         if PROFIL:
             T_LOGIC = time.time()
+
+        # env.pgo_obj.updateAllPosition()
 
         # if not paused:
         #     #Logic
@@ -457,6 +469,15 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 for rv in env.saved_rect_from_river:
                     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_CYAN, rv, 1)
 
+            if DISPLAY_OVERLAY:
+                for snpc in selected_npc:
+                    # pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, env.pgo_obj.positions[snpc], 1)
+                    for r in env.pgo_obj.getRectInRangeStrict(snpc):
+                        pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+                    for r in env.pgo_obj.getRectInRangeLimit(snpc):
+                        pygame.draw.rect(alpha_surface, basic_colors.ALPHA_RED, r, 1)
+
+
 
             #Display
 
@@ -478,7 +499,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 e.pause()
                 e.sprite.draw(screen, False)
                 if e in selected_npc:
-                    e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED, e)
+                    e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
                 e.resume()
             for sp in env.spawners:
                 sp.pause()

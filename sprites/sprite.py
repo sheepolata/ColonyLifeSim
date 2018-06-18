@@ -50,10 +50,15 @@ class SpriteNPC(SpriteEntityBase):
             displ_text = font.render(text, True, basic_colors.BLACK)
             screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
-    def drawSelected(self, screen, line_surface, color, entity):
+    def drawSelected(self, screen, line_surface, color):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
         
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, entity.vision_radius, 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, self.npc.vision_radius, 1)
+        # r = pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, entity.vision_radius, 1)
+        # pygame.draw.rect(line_surface, basic_colors.ALPHA_RED_2, r, 1)
+
+        # for r in self.npc.env.pgo_obj.getRectInRangeStrict(self.npc):
+        #     pygame.draw.rect(line_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)
