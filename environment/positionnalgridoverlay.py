@@ -33,6 +33,10 @@ class PositionnalGridOverlay(object):
             for j in range(len(self.grid[i])):
                 self.rectContainsFood[self.grid[i][j].center] = []
 
+    def updateRemoveDead(self):
+        for k in self.rectContainsNPC:
+            self.rectContainsNPC[k] = [x for x in self.rectContainsNPC[k] if not x.dead]
+
     def updateFoodPosition(self, food):
         for i in range(len(self.grid)):
             for j in range(len(self.grid[i])):

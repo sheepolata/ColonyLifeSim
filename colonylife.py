@@ -436,7 +436,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             for deadres in [x for x in env.ressources[kr] if x.dead]:
                 deadres.join()
             env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
-
+        env.pgo_obj.updateRemoveDead()
         for deadnpc in [x for x in env.npcs if x.dead]:
             deadnpc.join()
         env.npcs = [x for x in env.npcs if not x.dead]
