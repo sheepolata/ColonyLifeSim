@@ -17,7 +17,7 @@ import pygame
 class Entity(threading.Thread):
     def __init__(self, env):
         super(Entity, self).__init__()
-        self.daemon = False
+        self.daemon = True
 
         self.name = "Entity"
 
@@ -102,6 +102,8 @@ class NPC(Entity):
 
         self.selected = False
 
+        self.neigh_computation_thread = None
+        self.closestfood_computation_thread = None
 
         self.count_check_availaible_food = 0
         self.count_check_availaible_food_period = 50
@@ -135,6 +137,11 @@ class NPC(Entity):
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
 
+    def setNeigh_computation_thread(self, NCT):
+        self.neigh_computation_thread = NCT
+
+    def setClosestfood_computation_thread(self, CFCT):
+        self.closestfood_computation_thread = CFCT
 
     def init(self):
         self._ticker = utils.perpetualTimer(1, self.tick)
@@ -144,13 +151,7 @@ class NPC(Entity):
         return other.kindness == self.kindness
 
     def computeNeighbours(self):
-        # self.neighbours = []
-        for npc in self.env.npcs:
-            if not pf.checkStraightPath(self.env, self.getPose(), npc.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), npc.getPose()) <= self.vision_radius:
-                if not npc in self.neighbours:
-                    self.neighbours.append(npc)
-            elif npc in self.neighbours:
-                self.neighbours.remove(npc)
+        self.neighbours = self.neigh_computation_thread.neighbours[self]
 
     def updateFoodMemory(self):
         torm = []
@@ -162,9 +163,12 @@ class NPC(Entity):
             del self.known_food[k]
 
     def computeKnownFood(self):
-        for f in self.env.ressources["food"]:
-            if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
-                self.known_food[f] = 0
+        for cf in self.closestfood_computation_thread.closestFood[self]:
+            self.known_food[cf] = 0
+            
+        # for f in self.env.ressources["food"]:
+        #     if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
+        #         self.known_food[f] = 0
 
     def tick(self):
         if self.hunger <= self.hunger_max*0.1:

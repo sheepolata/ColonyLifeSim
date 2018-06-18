@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import entities.entity as entities
+import entities.computationthread as ct
 import environment.environment as Env
 import behaviours.behaviour as behaviour
 
@@ -32,6 +33,8 @@ class DisplayLoadingThread(threading.Thread):
     def __init__(self):
         super(DisplayLoadingThread, self).__init__()
     
+        self.daemon = True
+
         monitor = get_monitors()[0]
         
         pygame.init()
@@ -85,9 +88,9 @@ class DisplayLoadingThread(threading.Thread):
         print("stop Loading display")
         # self._stopper.set()
 
-    def join(self):
+    def join(self, timeout):
         print("join Loading display")
-        super(DisplayLoadingThread, self).join()
+        super(DisplayLoadingThread, self).join(timeout)
 
         
 
@@ -121,7 +124,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     # time.sleep(1)
 
     thread_loading.stop()
-    thread_loading.join()
+    thread_loading.join(2)
 
 
 
@@ -150,7 +153,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     l_npc = []
     for i in range(nb_npc):
-        entity = entities.NPC(env, "entity"+str(i))
+        entity = entities.NPC(env, name="entity"+str(i))
         entity.setRandomPose(main_surface_width, main_surface_height)
         entity.setIdleBehaviour()
         l_npc.append(entity)
@@ -167,6 +170,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     env.setNPCs(l_npc)
     env.setSpawners(l_spawner)
+
+    NCT  = ct.NeighboursComputationThread(env)
+    CFCT = ct.ClosestFoodComputationThread(env)
+
+    for npc in env.npcs:
+        npc.setNeigh_computation_thread(NCT)
+        npc.setClosestfood_computation_thread(CFCT)
 
     #Buttons
     color_rect_button = basic_colors.BLUE
@@ -209,6 +219,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     # print("wesh")
 
     #Start Threads
+    NCT.start()
+    CFCT.start()
     [x.start() for x in env.npcs]
     [x.start() for x in env.spawners]
     for kr in env.ressources.keys():
@@ -607,18 +619,24 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     for e in env.npcs:
         e.die()
         e.update()
-        e.join()
+        e.join(2)
 
     for sp in env.spawners:
         sp.die()
         sp.update()
-        sp.join()
+        sp.join(2)
 
     for kr in env.ressources.keys():
         for r in env.ressources[kr]:
             r.die()
             r.update()
-            r.join()
+            r.join(2)
+
+    NCT.stop()
+    NCT.join(2)
+
+    CFCT.stop()
+    CFCT.join(2)
 
     print("End !")
 
