@@ -75,15 +75,15 @@ class SpriteNPC(SpriteEntityBase):
         for vr in self.npc.known_food.keys():
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
-
-        current_path = copy.copy(self.npc.behaviour.path)
-        if self.npc.behaviour != None and len(current_path) >= 2:
-            for p in range(1, len(current_path)):
-                dep = current_path[p-1]
-                # dep = self.npc.getPose()
-                arr = current_path[p]
-                # arr = self.npc.behaviour.target
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
+        if self.npc.behaviour != None:
+            current_path = copy.copy(self.npc.behaviour.path)
+            if len(current_path) >= 2:
+                for p in range(1, len(current_path)):
+                    dep = current_path[p-1]
+                    # dep = self.npc.getPose()
+                    arr = current_path[p]
+                    # arr = self.npc.behaviour.target
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
 
 
 
