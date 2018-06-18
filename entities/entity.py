@@ -165,7 +165,7 @@ class NPC(Entity):
     def computeKnownFood(self):
         for cf in self.closestfood_computation_thread.closestFood[self]:
             self.known_food[cf] = 0
-            
+
         # for f in self.env.ressources["food"]:
         #     if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
         #         self.known_food[f] = 0
@@ -420,7 +420,9 @@ class Spawner(Entity):
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
     
     def setRandomPose(self, maxx, maxy):
-        super(Spawner, self).setRandomPose(maxx, maxy)
+        # super(Spawner, self).setRandomPose(maxx, maxy)
+        self.pose.setPose(random.randint(int(self.radius*1.2), maxx - int(self.radius*1.2))
+                            , random.randint(int(self.radius*1.2), maxy - int(self.radius*1.2)))
         while self.env.getCurrentRect(self.getPose()) == None or self.env.collideOneObstacle_Point(self.getPose()):
             super(Spawner, self).setRandomPose(maxx, maxy)
 
@@ -431,8 +433,8 @@ class Spawner(Entity):
         super(Spawner, self).die()
 
     def setPose(self, x, y):
-        super(Ressource, self).setPose(x, y)
-        self.rect = env.getCurrentRect(self.getPose())
+        super(Spawner, self).setPose(x, y)
+        self.rect = self.env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
 
     def setSpawnerBehaviour(self):
@@ -454,13 +456,19 @@ class Spawner(Entity):
         if self.sp_type == "foodspawner":
             res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
-            npx = self.pose.x + random.randint(int(self.radius*0.2), self.radius) * math.cos(self.angle * self.current_spawnee)
-            npy = self.pose.y + random.randint(int(self.radius*0.2), self.radius) * math.sin(self.angle * self.current_spawnee)
+            current_angle = self.angle * self.current_spawnee
+            current_radius = random.randint(int(self.radius*0.2), self.radius)
+            npx = self.pose.x + current_radius * math.cos(current_angle)
+            npy = self.pose.y + current_radius * math.sin(current_angle)
             asser = self.env.getCurrentRect((npx, npy))
             while asser == None:
-                self.angle += math.pi/12
-                npx = self.pose.x + random.randint(int(self.radius*0.2), self.radius) * math.cos(self.angle * self.current_spawnee)
-                npy = self.pose.y + random.randint(int(self.radius*0.2), self.radius) * math.sin(self.angle * self.current_spawnee)
+                self.radius = int(self.radius * 1.05)
+                current_angle += math.pi / 12
+                current_radius = random.randint(int(self.radius*0.2), self.radius)
+                npx = self.pose.x + current_radius * math.cos(current_angle)
+                npy = self.pose.y + current_radius * math.sin(current_angle)
+
+                asser = self.env.getCurrentRect((npx, npy))
 
             res.pose.x = npx
             res.pose.y = npy

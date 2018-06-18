@@ -357,6 +357,12 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                                     e.pause()
                                     e.setGOTOBehaviour(mp)
                                     e.resume()
+                        # else:
+                        #     spf = entities.Spawner(env, "spawner_user", "foodspawner", 10, 200, random.random()*0.6 + 0.8, False)
+                        #     spf.setPose(mp[0], mp[1])
+                        #     spf.setSpawnerBehaviour()
+                        #     env.addSpawner(spf)
+                        #     spf.start()
                     #Mouth Wheel up
                     if event.button == 4:
                         if info_surface.get_rect(topleft=topleft_info).collidepoint(mp):
