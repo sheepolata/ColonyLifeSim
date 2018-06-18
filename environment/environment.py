@@ -43,7 +43,7 @@ class Environment(object):
 
         self.loading = 0
 
-        self.pgo_obj = pgo.PositionnalGridOverlay(self, 20)
+        self.pgo_obj = pgo.PositionnalGridOverlay(self, 25)
 
     def setNPCs(self, npcs):
         self.npcs = npcs

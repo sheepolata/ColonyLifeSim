@@ -173,8 +173,12 @@ class NPC(Entity):
 
     def tick(self):
 
+        self.updateFoodMemory()
         if self._tick%10 == 0:
             self.env.pgo_obj.updatePosition(self)
+
+            self.computeNeighbours()
+            self.computeKnownFood()
 
         if self.hunger <= self.hunger_max*0.1:
             self.have_to_eat = False
@@ -186,47 +190,44 @@ class NPC(Entity):
             if self.hunger >= self.hunger_max:
                 self.die()
 
-        self.updateFoodMemory()
-        if self._tick%50 == 0:
-            self.computeNeighbours()
-            self.computeKnownFood()
-
         self._tick += 1
         if self._tick%1000 == 0:
             self._tick = 0
 
     def collectRessource(self, res):
+        v = res.getSome(random.randint(15, 25))
+        return v 
+
+    def putInBagpack(self, res, qtt):
         if not res.name in self.bagpack.keys():
             self.bagpack[res.name] = 0
-
-        v = res.getSome(random.randint(25, 45)) 
-        self.bagpack[res.name] = round(v * self.harvester, 2)
-        # print("collect", v * self.harvester)
-        return round(10*v) #Time to wait
+        self.bagpack[res.name] = round(qtt * self.harvester, 2)
 
     def haveFood(self):
         return "food" in self.bagpack.keys() and self.bagpack["food"] > 0
 
     def consumeFood(self):
+        consume = 0
         if self.haveFood():
             consume = 1 if self.bagpack["food"] >= 1 else self.bagpack["food"]
             self.hunger -= consume
             self.bagpack["food"] -= consume
         if self.hunger <= 0:
             self.hunger = 0
+        return consume
 
     def setIdleBehaviour(self):
         self.pause()
         if self.behaviour!= None and self.behaviour.state == "idle":
             return
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.IdleBehaviour(self, self.env)
         self.behaviour.computePath()
         self.resume()
 
     def setGOTOBehaviour(self, st):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.GOTOBehaviour(self, self.env, st)
         cp = self.behaviour.computePath()
         self.resume()
@@ -234,28 +235,28 @@ class NPC(Entity):
 
     def setGOTORessource(self, res):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.GOTORessource(self, self.env, res)
         cp = self.behaviour.computePath()
         self.resume()
 
     def setHarvestBehaviour(self, res):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.Harvest(self, self.env, res)
         self.behaviour.computePath()
         self.resume()
 
     def setWaitBehaviour(self, time):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.Wait(self, self.env, time)
         self.behaviour.computePath()
         self.resume()
 
     def setEmptyBehaviour(self):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.EmptyBehaviour(self, self.env)
         self.resume()
 
@@ -266,8 +267,13 @@ class NPC(Entity):
             
     def setCollectFoodBehaviour(self):
         self.pause()
-        self.behaviour = None
+        # self.behaviour = None
         self.behaviour = behaviour.CollectFood(self, self.env)
+        self.resume()
+
+    def setConsumeFoodBehaviour(self):
+        self.pause()
+        self.behaviour = behaviour.ConsumeFood(self, self.env)
         self.resume()
 
     def drawDebugCollision(self, surface):
@@ -284,14 +290,11 @@ class NPC(Entity):
         if self.dead:
             return
 
-        if self.have_to_eat:
-            # print self.behaviour.label
-
-            # if self.selected:
-            #     print self.name + " have to eat"
-
+        if self.have_to_eat and (self.behaviour.state != "wait" if self.behaviour != None else True):
             if self.haveFood():
-                self.consumeFood()
+                # cons = self.consumeFood()
+                # self.setWaitBehaviour(int(round(cons))+1)
+                self.setConsumeFoodBehaviour()
             elif self.behaviour.label != "COFO":
                 if self.count_check_availaible_food == 0:
                     res, _tar_res = self.env.getClosestRessourceFromList(self.getPose(), self.known_food.keys())
@@ -310,12 +313,12 @@ class NPC(Entity):
             # print ns
             if ns == -1:
                 self.setIdleBehaviour()
-            elif self.behaviour.state == "goto" and ns == 1:
-                self.setIdleBehaviour()
-            elif self.behaviour.label == "COFO" and ns == 1:
-                self.setIdleBehaviour()
-            elif self.behaviour.state == "wait" and ns == 1:
-                self.setIdleBehaviour()
+            elif ((self.behaviour.state == "goto" 
+                        or self.behaviour.state == "wait" 
+                        or self.behaviour.label == "COFO"
+                        or self.behaviour.label == "EAT") 
+                        and ns == 1):
+                self.setIdleBehaviour()           
             elif self.behaviour.state == "idle" and ns == 1:
                 self.setWaitBehaviour(50)
         else:
@@ -353,6 +356,8 @@ class Ressource(Entity):
         self._tick = 0
 
         self.used = False
+
+        self.time_per_unit = 8
 
         self.spawner = spawner
 

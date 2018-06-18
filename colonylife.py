@@ -472,12 +472,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             if DISPLAY_OVERLAY:
                 for snpc in selected_npc:
                     # pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, env.pgo_obj.positions[snpc], 1)
+
                     for r in snpc.neighbours_rect:
                         pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
+                    # pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, snpc.neighbours_rect[0].unionall(snpc.neighbours_rect[1:]), 1)
+
                     # for r in env.pgo_obj.getRectInRangeLimit(snpc):
                     #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_RED, r, 1)
-
-
 
             #Display
 
