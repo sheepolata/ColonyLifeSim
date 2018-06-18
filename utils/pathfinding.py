@@ -1,8 +1,11 @@
-
+import geometry as geo
+import time
+import utils
 
 #_start and _goal here are Coordinates
 def heuristic_cost_estimate(_current, _goal):
-    res = 10 * (abs(_current[0] - _goal[0]) + abs(_current[1] - _goal[1]))
+    # res = 10 * (abs(_current[0] - _goal[0]) + abs(_current[1] - _goal[1]))
+    res = utils.distance2p(_current, _goal)
     return res
 
 def astar(_start, _goal, env):
@@ -93,6 +96,48 @@ def computePathLength(env, path):
         res = res + env.graph[path[i]][path[i+1]]
     return res
 
-def getPathLength(env, pose1, pose2):
-    path = astar(pose1, pose2, env)
-    return computePathLength(env, path)
+def getPathLength(env, pose1, pose2, approx=False):
+    #NEW BUT NOT GOOD
+    # astar_needed = checkStraightPath(env, pose1, pose2, 2)
+    # if astar_needed:
+    #     path = astar(pose1, pose2, env)
+    #     res = computePathLength(env, path)
+    # else:
+    #     res = utils.distance2p(pose1, pose2)
+    if approx:
+        res = utils.distance2p(pose1, pose2)
+    #OLD
+    else:
+        path = astar(pose1, pose2, env)
+        res = computePathLength(env, path)
+    
+    return res
+    
+    # return utils.distance2p(pose1, pose2)
+
+def checkStraightPath(env, p1, p2, precision, check_obs=True, check_river=True):
+    #if line from entity.pos to target is OK, do not compute astar
+        #y = a*x + b => a==0 : parallele; a==inf : perpendicular; a == (-)1 : (-)45deg
+    a, b = geo.computeLineEquation(p1, p2)
+    astar_needed = False
+    if a == None or b == None:
+        astar_needed = True
+    elif abs(p1[0] - p2[0]) > abs(p1[1] - p2[1]):
+        mini = min(p1[0], p2[0])
+        maxi = max(p1[0], p2[0])
+
+        for step_x in range(int(mini), int(maxi), int(precision)):
+            y = a*step_x + b
+            if env.collideOneObstacle_Point((step_x, y), check_obs=check_obs, check_river=check_river):
+                astar_needed = True
+    else:
+        mini = min(p1[1], p2[1])
+        maxi = max(p1[1], p2[1])
+
+        for step_y in range(int(mini), int(maxi), int(precision)):
+            # y = a*step_x + b
+            x = (step_y - b)/a
+            if env.collideOneObstacle_Point((x, step_y), check_obs=check_obs, check_river=check_river):
+                astar_needed = True
+
+    return astar_needed

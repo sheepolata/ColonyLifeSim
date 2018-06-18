@@ -7,6 +7,7 @@ import pygame
 import math
 import random 
 import copy
+import time
 
 import numpy as np
 
@@ -25,6 +26,9 @@ class Environment(object):
 
         self.ressources = {}
 
+        self.npcs = []
+        self.spawners = []
+
         self.min_tile_w = int(self.width*0.1)
         self.min_tile_h = int(self.height*0.1)
 
@@ -37,6 +41,26 @@ class Environment(object):
 
 
         self.loading = 0
+
+    def setNPCs(self, npcs):
+        self.npcs = npcs
+
+    def addNPC(self, npc):
+        self.npcs.append(npc)
+
+    def rmNPC(self, npc):
+        if npc in self.npcs:
+            self.npcs.remove(npc)
+
+    def setSpawners(self, spawners):
+        self.spawners = spawners
+
+    def addSpawner(self, sp):
+        self.spawners.append(sp)
+
+    def rmSpawner(self, sp):
+        if sp in self.spawners:
+            self.spawners.remove(sp)
 
     def constructEnvironment(self, nb_passage):
         pc.setDict("ENV_CONSTR_TRACK", "scope", "Split the Environment...")
@@ -55,7 +79,38 @@ class Environment(object):
             self.ressources[res.name] = []
         self.ressources[res.name].append(res)
 
-    def getClosestRessource(self, pose, resname):
+    def getClosestRessourceFromList(self, pose, rlist):
+        # result = self.ressources[resname][0]
+        mini = float("inf")
+        ok = None
+        rect_ok = None
+
+        # t=time.time()
+
+        for cand in [x for x in rlist if (x.harvestable and not x.used)]:
+            # dist = utils.distance2p(pose, cand.getPose())
+            cand_rect = self.getCurrentRect(cand.getPose())
+            current_pose = self.getCurrentRect(pose)
+            if current_pose == None or cand_rect == None:
+                continue
+
+            # t=time.time()
+            
+            dist = pf.getPathLength(self, current_pose.center, cand_rect.center)
+            
+            # print("{}s".format(time.time()-t))
+            
+            if dist == -1:
+                continue
+            if dist <= mini:
+                ok = cand
+                rect_ok = cand_rect
+                mini = dist
+        
+        # print("{}s".format(time.time()-t))
+        
+        return ok, rect_ok
+    def getClosestRessource(self, pose, resname, approx=False):
         if not resname in self.ressources.keys() or not self.ressources[resname]:
             return None, None
         
@@ -63,19 +118,31 @@ class Environment(object):
         mini = float("inf")
         ok = None
         rect_ok = None
+
+        # t=time.time()
+
         for cand in [x for x in self.ressources[resname] if (x.harvestable and not x.used)]:
             # dist = utils.distance2p(pose, cand.getPose())
             cand_rect = self.getCurrentRect(cand.getPose())
             current_pose = self.getCurrentRect(pose)
             if current_pose == None or cand_rect == None:
                 continue
-            dist = pf.getPathLength(self, current_pose.center, cand_rect.center)
+
+            # t=time.time()
+            
+            dist = pf.getPathLength(self, current_pose.center, cand_rect.center, approx)
+            
+            # print("{}s".format(time.time()-t))
+            
             if dist == -1:
                 continue
             if dist <= mini:
                 ok = cand
                 rect_ok = cand_rect
                 mini = dist
+        
+        # print("{}s".format(time.time()-t))
+        
         return ok, rect_ok
 
     def getRandomValidPose(self):
@@ -91,13 +158,15 @@ class Environment(object):
 
         return (tx, ty)
 
-    def collideOneObstacle_Point(self, point):
-        for o in self.obstacles:
-            if o.sprite.rect.collidepoint(point):
-                return True
-        for oriver in self.saved_rect_from_river:
-            if oriver.collidepoint(point):
-                return True
+    def collideOneObstacle_Point(self, point, check_obs=True, check_river=True):
+        if check_obs:
+            for o in self.obstacles:
+                if o.sprite.rect.collidepoint(point):
+                    return True
+        if check_river:
+            for oriver in self.saved_rect_from_river:
+                if oriver.collidepoint(point):
+                    return True
         return False
 
     def collideOneObstacle_Rect(self, rect):

@@ -4,6 +4,7 @@ import behaviours.behaviour as behaviour
 import random
 import sprites.sprite
 import profilerConfig as pc
+import utils.pathfinding as pf
 
 import threading
 
@@ -16,6 +17,8 @@ import pygame
 class Entity(threading.Thread):
     def __init__(self, env):
         super(Entity, self).__init__()
+        self.daemon = False
+
         self.name = "Entity"
 
         self.pose = utils.Pose(0, 0)
@@ -99,37 +102,85 @@ class NPC(Entity):
 
         self.selected = False
 
+
         self.count_check_availaible_food = 0
-        self.count_check_availaible_food_period = 100
+        self.count_check_availaible_food_period = 50
 
         #Inventory
         self.bagpack = {}
 
         #vital monitoring
         self.hunger = 0.0
-        self.hunger_thresh = random.randint(40, 60)
-        self.hunger_max = self.hunger_thresh + 50
+        self.hunger_thresh = random.randint(60, 80)
+        self.hunger_max = self.hunger_thresh + 30
         self.have_to_eat = False
 
         self.harvester = random.random()*0.8 + 0.4
 
+        self.vision_radius = 150
+
+        #MEMORY and SOCIAL
+
+        self.neighbours = []
+        self.memory = random.randint(800, 1200)
+        self.known_food = {}
+
+        #cowardliness 0 ... 10 courage
+        # self.courage = round(random.random()*10, 2)
+        self.courage = random.choice([0, 1])
+        #kindness 0 ... 10 aggressivness
+        # self.kindness = round(random.random()*10, 2)
+        self.kindness = random.choice([0, 1])
+
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
 
-        # self.init()
 
     def init(self):
         self._ticker = utils.perpetualTimer(1, self.tick)
         self._ticker.start()
 
-    def tick(self):
-        if self.hunger <= 0:
-            self.have_to_eat = False
+    def isFriend(self, other):
+        return other.kindness == self.kindness
 
-        if self._tick%10 == 0:
+    def computeNeighbours(self):
+        # self.neighbours = []
+        for npc in self.env.npcs:
+            if not pf.checkStraightPath(self.env, self.getPose(), npc.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), npc.getPose()) <= self.vision_radius:
+                if not npc in self.neighbours:
+                    self.neighbours.append(npc)
+            elif npc in self.neighbours:
+                self.neighbours.remove(npc)
+
+    def updateFoodMemory(self):
+        torm = []
+        for k in self.known_food.keys():
+            self.known_food[k] += 1
+            if self.known_food[k] >= self.memory:
+                torm.append(k)
+        for k in torm:
+            del self.known_food[k]
+
+    def computeKnownFood(self):
+        for f in self.env.ressources["food"]:
+            if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
+                self.known_food[f] = 0
+
+    def tick(self):
+        if self.hunger <= self.hunger_max*0.1:
+            self.have_to_eat = False
+        elif self.hungry():
+            self.have_to_eat = True
+
+        if self._tick%50 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
+
+        self.updateFoodMemory()
+        if self._tick%50 == 0:
+            self.computeNeighbours()
+            self.computeKnownFood()
 
         self._tick += 1
         if self._tick%1000 == 0:
@@ -223,8 +274,6 @@ class NPC(Entity):
 
         if self.dead:
             return
-        if self.hungry():
-            self.have_to_eat = True
 
         if self.have_to_eat:
             # print self.behaviour.label
@@ -236,10 +285,10 @@ class NPC(Entity):
                 self.consumeFood()
             elif self.behaviour.label != "COFO":
                 if self.count_check_availaible_food == 0:
-                    res, _tar_res = self.env.getClosestRessource(self.getPose(), "food")
+                    res, _tar_res = self.env.getClosestRessourceFromList(self.getPose(), self.known_food.keys())
                     if res != None:
                         self.count_check_availaible_food = 0
-                        self.count_check_availaible_food_period = 100
+                        self.count_check_availaible_food_period = 50
                         self.setCollectFoodBehaviour()
                     else:
                         self.count_check_availaible_food_period = min(self.count_check_availaible_food_period+50, 1500)
@@ -271,7 +320,6 @@ class NPC(Entity):
     def setPose(self, x, y):
         super(NPC, self).setPose(x, y)
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
-
 
 class Obstacle(Entity):
     def __init__(self, sizew, sizeh, env):
@@ -307,8 +355,11 @@ class Ressource(Entity):
         self.replen_rate = round(random.random()*0.45 + 0.33, 2)
         self.harvestable = True
 
+
         randpose = self.env.getRandomValidPose()
         self.pose = utils.Pose(randpose[0], randpose[1])
+
+        self.rect = env.getCurrentRect(self.getPose())
 
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
         
@@ -317,6 +368,7 @@ class Ressource(Entity):
 
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
+        self.rect = env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteRessource(self, self.pose)
 
     def update(self):
@@ -355,6 +407,8 @@ class Spawner(Entity):
         self.current_spawnee = 0
         self.list_ressource = []
 
+        self.rect = env.getCurrentRect(self.getPose())
+
         self.angle = (float(2*math.pi) / self.max_spawnee)
 
         self.replenishable = rep
@@ -374,6 +428,7 @@ class Spawner(Entity):
 
     def setPose(self, x, y):
         super(Ressource, self).setPose(x, y)
+        self.rect = env.getCurrentRect(self.getPose())
         self.sprite = sprites.sprite.SpriteSpawner(self, self.pose)
 
     def setSpawnerBehaviour(self):
@@ -391,7 +446,7 @@ class Spawner(Entity):
             # print(str(self.current_spawnee) + "/" + str(self.max_spawnee))
         super(Spawner, self).update()
 
-    def spawn(self):
+    def spawn(self, start_thread=True):
         if self.sp_type == "foodspawner":
             res = Ressource(self.env, "food", random.randint(int(20*self.factor), int(75*self.factor)), self.replenishable, spawner=self)
 
@@ -409,4 +464,6 @@ class Spawner(Entity):
             res.setRegrowBehaviour()
             self.env.addRessource(res)
             self.list_ressource.append(res)
-            self.current_spawnee += 1        
+            self.current_spawnee += 1
+
+            if start_thread : res.start()     
