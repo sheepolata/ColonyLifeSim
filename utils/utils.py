@@ -22,6 +22,9 @@ def getSign(x):
     else:
         return 0
 
+def normalise(a, mini, maxi):
+    return (float(a) - float(mini)) / (float(maxi) - float(mini))
+
 def closeEnough(a, b, _thresh=10):
     return abs(a-b) <= _thresh
 

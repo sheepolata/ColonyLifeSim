@@ -125,18 +125,62 @@ class NPC(Entity):
 
         self.neighbours = []
         self.neighbours_rect = []
+
+        self.social_xp = {}
+
         self.memory = random.randint(800, 1200)
         self.known_food = {}
 
         #cowardliness 0 ... 10 courage
-        # self.courage = round(random.random()*10, 2)
-        self.courage = random.choice([0, 1])
-        #kindness 0 ... 10 aggressivness
-        # self.kindness = round(random.random()*10, 2)
-        self.kindness = random.choice([0, 1])
+        self.courage = random.randint(0, 10)
+        # self.courage = random.choice([0, 1])
+
+        #aggressivness 0 ... 10 kindness
+        self.kindness = random.randint(0, 10)
+        # self.kindness = random.choice([0, 1])
+
+        #Attack
+        #Defense
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
+
+    def setInitialSocialXP(self):
+        for npc in self.env.npcs:
+            self.social_xp[npc] = 0
+
+    def getInteractionProbability(self, other):
+        diff_kind = float(abs(self.kindness - other.kindness) + 1)
+
+        if self.isGoodFriend(other):
+            nature = "good"
+            proba = ((1 / diff_kind) + (float(self.social_xp[other]) / (400))) * 1.2
+        elif self.isFriend(other):
+            nature = "good"
+            proba = (1 / diff_kind) + (float(self.social_xp[other]) / (400))
+        elif self.isEnnemy(other):
+            nature = "bad"
+            proba = 1 - ((1 / diff_kind) + (float(self.social_xp[other]) / (400)))
+        elif self.isSwornEnnemy(other):
+            nature = "bad"
+            proba = (1 - ((1 / diff_kind) + (float(self.social_xp[other]) / (400)))) * 1.2
+        else:
+            nature = "neutral"
+            proba = 0.0
+
+        return {"p_interact_base": proba, "nature": nature}
+
+    def shareFoodMemory(self, other):
+        if self.known_food:
+            for mf in self.known_food.keys():    
+                other.known_food[mf] = 0
+            #add xp
+            self.social_xp[other] = min(self.social_xp[other] + 5, 100)
+            other.social_xp[self] = min(other.social_xp[self] + 10, 100)
+
+    def insult(self, other):
+        self.social_xp[other] = max(self.social_xp[other] - 5, -100)
+        other.social_xp[self] = max(other.social_xp[self] - 15, -100)
 
     def setNeigh_computation_thread(self, NCT):
         self.neigh_computation_thread = NCT
@@ -149,10 +193,40 @@ class NPC(Entity):
         self._ticker.start()
 
     def isFriend(self, other):
-        return other.kindness == self.kindness
+        return float(abs(self.kindness - other.kindness)) <= 4 or self.social_xp[other] >= 50
+
+    def isGoodFriend(self, other):
+        return self.social_xp[other] >= 75
+
+    def isEnnemy(self, other):
+        return float(abs(self.kindness - other.kindness)) >= 6 or self.social_xp[other] <= -50
+
+    def isSwornEnnemy(self, other):
+        return self.social_xp[other] <= -75
 
     def computeNeighbours(self):
         self.neighbours = self.neigh_computation_thread.neighbours[self]
+
+    def socialInteraction(self):
+        for n in self.neighbours:
+            interact = self.getInteractionProbability(n)
+            if self.isGoodFriend(n):
+                if random.random() < interact["p_interact_base"]:
+                    self.shareFoodMemory(n)
+            elif interact["nature"] == "good":
+                if random.random() < interact["p_interact_base"]:
+                    self.shareFoodMemory(n)
+            elif interact["nature"] == "neutral":
+                if random.random() < interact["p_interact_base"]:
+                    self.insult(n)
+                else:
+                    self.shareFoodMemory(n)
+            elif interact["nature"] == "bad":
+                if random.random() < interact["p_interact_base"]:
+                    self.insult(n)
+            elif self.isSwornEnnemy(n):
+                if random.random() < interact["p_interact_base"]:
+                    self.insult(n)
 
     def updateFoodMemory(self):
         torm = []
@@ -189,6 +263,9 @@ class NPC(Entity):
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
             if self.hunger >= self.hunger_max:
                 self.die()
+
+        if self._tick%200 == 0:
+            self.socialInteraction()
 
         self._tick += 1
         if self._tick%1000 == 0:
