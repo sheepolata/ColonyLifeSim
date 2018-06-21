@@ -15,6 +15,8 @@ class NeighboursComputationThread(threading.Thread):
 
         self.env = env
 
+        self.name = "NCT"
+
         self.neighbours = {}
         for focus in self.env.npcs:
             self.neighbours[focus] = []
@@ -97,6 +99,8 @@ class ClosestFoodComputationThread(threading.Thread):
 
         self.env = env
         self.running = True
+
+        self.name = "CFCT"
 
         self.closestFood = {}
         for focus in env.npcs:
