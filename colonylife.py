@@ -94,6 +94,23 @@ class DisplayLoadingThread(threading.Thread):
         print("join Loading display")
         super(DisplayLoadingThread, self).join(timeout)
 
+class QuitScreenThead(threading.Thread):        
+    def __init__(self):
+        super(DisplayLoadingThread, self).__init__()
+    
+        self.daemon = True
+
+        monitor = get_monitors()[0]
+        
+        pygame.init()
+
+        screen_width, screen_height = int(monitor.width*0.9), int(monitor.height*0.9)
+        self.window = pygame.display.set_mode((screen_width, screen_height))
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
+
+
+        self.is_running = True
+
 def draw_button(surface, fill_color, outline_color, rect, border=1):
     surface.fill(outline_color, rect)
     surface.fill(fill_color, rect.inflate(-border*2, -border*2))   
@@ -682,32 +699,32 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             window.blit(info_surface, (main_surface_width, 0))
 
             # pygame.draw.rect(window, color_quit_button, quit_button)
-            draw_button(window, color_quit_button, color_quit_button_base, quit_button, border=5)
+            draw_button(window, color_quit_button, color_quit_button_base, quit_button, border=4)
             window.blit(quit_text, (quit_button.center[0] - (quit_text.get_width()/2), 
                 quit_button.center[1] - (quit_text.get_height()/2) ) )
 
             # pygame.draw.rect(window, color_rect_button, rect_button)
-            draw_button(window, color_rect_button, color_rect_button_base, rect_button, border=5)
+            draw_button(window, color_rect_button, color_rect_button_base, rect_button, border=4)
             window.blit(rect_text, (rect_button.center[0] - (rect_text.get_width()/2), 
                 rect_button.center[1] - (rect_text.get_height()/2) ))
 
             # pygame.draw.rect(window, color_pause_button, pause_button)
-            draw_button(window, color_pause_button, color_pause_button_base, pause_button, border=5)
+            draw_button(window, color_pause_button, color_pause_button_base, pause_button, border=4)
             window.blit(paused_text, (pause_button.center[0] - (paused_text.get_width()/2), 
                 pause_button.center[1] - (paused_text.get_height()/2) ) )
 
             # pygame.draw.rect(window, color_info_button, info_button)
-            draw_button(window, color_info_button, color_info_button_base, info_button, border=5)
+            draw_button(window, color_info_button, color_info_button_base, info_button, border=4)
             window.blit(info_text, (info_button.center[0] - (info_text.get_width()/2), 
                 info_button.center[1] - (info_text.get_height()/2) ) )
 
             # pygame.draw.rect(window, color_name_button, name_info_button)
-            draw_button(window, color_name_button, color_name_button_base, name_info_button, border=5)
+            draw_button(window, color_name_button, color_name_button_base, name_info_button, border=4)
             window.blit(name_info_text, (name_info_button.center[0] - (name_info_text.get_width()/2), 
                 name_info_button.center[1] - (name_info_text.get_height()/2) ) )
 
             # pygame.draw.rect(window, color_relation_button, relation_info_button)
-            draw_button(window, color_relation_button, color_relation_button_base, relation_info_button, border=5)
+            draw_button(window, color_relation_button, color_relation_button_base, relation_info_button, border=4)
             window.blit(relation_info_text, (relation_info_button.center[0] - (relation_info_text.get_width()/2), 
                 relation_info_button.center[1] - (relation_info_text.get_height()/2) ) )
 
