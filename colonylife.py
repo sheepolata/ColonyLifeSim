@@ -153,6 +153,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         screen = pygame.Surface((main_surface_width, main_surface_height))
         topleft_alpha_surface = topleft_screen
         alpha_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
+        select_rect_surface = pygame.Surface((main_surface_width, main_surface_height), pygame.SRCALPHA)
         topleft_info = (topleft_screen[0]+main_surface_width, 0)
         info_surface = pygame.Surface((info_surface_width, info_surface_height), pygame.SRCALPHA)
     
@@ -279,6 +280,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         if DISPLAY:
             screen.fill(basic_colors.GREEN)
             alpha_surface.fill(basic_colors.EMPTY)
+            select_rect_surface.fill(basic_colors.EMPTY)
             info_surface.fill(basic_colors.WHITE)
 
         mp = pygame.mouse.get_pos()
@@ -517,7 +519,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
-                selection_rect.draw(alpha_surface)
+                selection_rect.draw(select_rect_surface)
 
             t_display = time.time() - t_display
             t_display_list.append(t_display)
@@ -570,14 +572,14 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
                 displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
 
-                txt_stat1 = "     speed : {}  memory : {}".format(str(e.speed), str(e.memory))
+                txt_stat1 = "  - speed : {}  memory : {}".format(str(e.speed), str(e.memory))
                 displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
 
                 # txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
-                txt_hunger = "     hunger : {}/{} - kind : {} cour : {}".format(str(e.hunger), str(e.hunger_max), str(e.kindness), str(e.courage))
+                txt_hunger = "  - hunger : {}/{} - kind : {} cour : {}".format(str(e.hunger), str(e.hunger_max), str(e.kindness), str(e.courage))
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-                txt_behaviour = "     state : " + (e.behaviour.state if e.behaviour != None else "none")
+                txt_behaviour = "  - state : {} | Last soc. int. : {}".format((e.behaviour.label if e.behaviour != None else "none"), e.last_social_interaction)
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
@@ -618,6 +620,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             #Blit and Flip surfaces
             window.blit(screen, (0, 0))
             window.blit(alpha_surface, (0, 0))
+            window.blit(select_rect_surface, (0, 0))
             window.blit(info_surface, (main_surface_width, 0))
 
             pygame.draw.rect(window, color_quit_button, quit_button)
