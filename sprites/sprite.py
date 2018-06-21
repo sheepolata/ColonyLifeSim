@@ -2,6 +2,9 @@ import pygame
 import utils.basic_colors as basic_colors
 from pygame.locals import *
 
+import copy
+import utils.utils as utils
+
 
 class SpriteEntityBase(object):
     """docstring for SpriteEntityBase"""
@@ -36,6 +39,20 @@ class SpriteObstacle(SpriteEntityBase):
 
         pygame.draw.rect(screen, self.color, self.rect)
 
+def drawRelations(line_surface, list_npcs):
+    for npc in list_npcs:
+        for n in npc.neighbours:
+            if npc.social_xp[n] > -25 and npc.social_xp[n] < 0:
+                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, 0)*5 + 1))
+            elif npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
+                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 0, 25)*5 + 1))
+            elif npc.social_xp[n] > 25:
+                c = (0, 100*utils.normalise(npc.social_xp[n], 25, 100)+155, 0, 128)
+                pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 25, 100)*5 + 1))
+            elif npc.social_xp[n] < -25:
+                c = (100*utils.normalise(npc.social_xp[n], -25, -100)+155, 0, 0, 128)
+                pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, -100)*5 + 1))
+
 class SpriteNPC(SpriteEntityBase):
     def __init__(self, color, pose, npc):
         super(SpriteNPC, self).__init__(color, pose)
@@ -66,21 +83,28 @@ class SpriteNPC(SpriteEntityBase):
         screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
         for n in self.npc.neighbours:
-            if self.npc.isFriend(n):
-                pygame.draw.line(line_surface, basic_colors.ALPHA_LIME, self.rect.center, n.sprite.rect.center)
-            else:
-                pygame.draw.line(line_surface, basic_colors.ALPHA_RED, self.rect.center, n.sprite.rect.center)
+            if self.npc.social_xp[n] > -25 and self.npc.social_xp[n] < 0:
+                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, 0)*5 + 1))
+            elif self.npc.social_xp[n] >= 0 and self.npc.social_xp[n] < 25:
+                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 0, 25)*5 + 1))
+            elif self.npc.social_xp[n] > 25:
+                c = (0, 100*utils.normalise(self.npc.social_xp[n], 25, 100)+155, 0, 128)
+                pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 25, 100)*5 + 1))
+            elif self.npc.social_xp[n] < -25:
+                c = (100*utils.normalise(self.npc.social_xp[n], -25, -100)+155, 0, 0, 128)
+                pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, -100)*5 + 1))
         for vr in self.npc.known_food.keys():
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
-
-        if self.npc.behaviour != None and len(self.npc.behaviour.path) >= 2:
-            for p in range(1, len(self.npc.behaviour.path)):
-                dep = self.npc.behaviour.path[p-1]
-                # dep = self.npc.getPose()
-                arr = self.npc.behaviour.path[p]
-                # arr = self.npc.behaviour.target
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
+        if self.npc.behaviour != None:
+            current_path = copy.copy(self.npc.behaviour.path)
+            if len(current_path) >= 2:
+                for p in range(1, len(current_path)):
+                    dep = current_path[p-1]
+                    # dep = self.npc.getPose()
+                    arr = current_path[p]
+                    # arr = self.npc.behaviour.target
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE_2, dep, arr)
 
 
 

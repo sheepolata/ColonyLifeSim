@@ -13,6 +13,7 @@ import utils.pathfinding as pf
 import utils.utils as utils
 import utils.basic_colors as basic_colors
 import utils.selectionrect as select_rect
+import sprites.sprite as sprite
 
 import profilerConfig as pc
 
@@ -133,6 +134,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
     DISPLAY_DEBUG = debug_displ
     DISPLAY_OVERLAY = False
+    DISPLAY_RELATION = False
 
     pygame.init()
 
@@ -182,6 +184,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         npc.setNeigh_computation_thread(NCT)
         npc.setClosestfood_computation_thread(CFCT)
         env.pgo_obj.updatePosition(npc)
+        npc.setInitialSocialXP()
 
     
 
@@ -337,6 +340,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
 
                         shift_list_ent_inf = 0
                         shift_list_ent_sup = shift_list_ent_span
+                    elif event.key == K_r:
+                        DISPLAY_RELATION = not DISPLAY_RELATION
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     #LMB
                     if event.button == 1:
@@ -436,10 +441,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             for deadres in [x for x in env.ressources[kr] if x.dead]:
                 deadres.join()
             env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
-
+        env.pgo_obj.updateRemoveDead()
         for deadnpc in [x for x in env.npcs if x.dead]:
             deadnpc.join()
         env.npcs = [x for x in env.npcs if not x.dead]
+
+        if DISPLAY_RELATION:
+            sprite.drawRelations(alpha_surface, env.npcs)
 
         t_update = time.time() - t_update
         t_update_list.append(t_update)
@@ -472,12 +480,13 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             if DISPLAY_OVERLAY:
                 for snpc in selected_npc:
                     # pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, env.pgo_obj.positions[snpc], 1)
-                    for r in env.pgo_obj.getRectInRangeStrict(snpc):
+
+                    for r in snpc.neighbours_rect:
                         pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, r, 1)
-                    for r in env.pgo_obj.getRectInRangeLimit(snpc):
-                        pygame.draw.rect(alpha_surface, basic_colors.ALPHA_RED, r, 1)
+                    # pygame.draw.rect(alpha_surface, basic_colors.ALPHA_WHITE, snpc.neighbours_rect[0].unionall(snpc.neighbours_rect[1:]), 1)
 
-
+                    # for r in env.pgo_obj.getRectInRangeLimit(snpc):
+                    #     pygame.draw.rect(alpha_surface, basic_colors.ALPHA_RED, r, 1)
 
             #Display
 

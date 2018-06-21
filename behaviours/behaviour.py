@@ -194,11 +194,6 @@ class CollectFood(Behaviour):
         self.entity.target_res = None
 
     def computePath(self):
-        # res, _tar_res = self.env.getClosestRessource(self.entity.getPose(), "food")
-        # if res == None:
-        #     return -1
-        # else:
-        #     return 1
         pass    
 
     def nextStep(self):
@@ -206,28 +201,17 @@ class CollectFood(Behaviour):
 
         changed = False
         _target_rect = None
-        # print self.entity.target_res
         if self.entity.target_res == None or not self.entity.target_res.harvestable:
             changed = True
 
-            # t=time.time()
-            # if self.entity.name == "entity1" : print("{} get ressource !".format(self.entity.name))
-
             self.entity.target_res, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), self.entity.known_food)
-            
-            # if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
             
             if self.entity.target_res == None:
                 return 1
             self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
             self.state = "collectfood:GTR"
         elif self.count_recomp_path == -1:
-            t=time.time()
-            # if self.entity.name == "entity1" : print("{} recompute now !".format(self.entity.name))
-
             old_tr, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), "food", approx=False)
-
-            # if self.entity.name == "entity1" : print("{}s".format(time.time()-t))
             
             if self.entity.target_res != None and old_tr != None and self.entity.target_res != old_tr:
                 changed = True
@@ -241,7 +225,6 @@ class CollectFood(Behaviour):
             self.path = self.gotobehaviour.path
             changed = False
 
-        # print(self.gotobehaviour, self.harvestbehaviour)
         if self.gotobehaviour != None:
             ns = self.gotobehaviour.nextStep()
             if ns == 1:
@@ -256,9 +239,7 @@ class CollectFood(Behaviour):
                 return 0
         elif self.harvestbehaviour != None:
             ns = self.harvestbehaviour.nextStep()
-            # print ("ns=",ns)
             if ns == 1:
-                # print "end"
                 self.harvestbehaviour = None
                 return 1
             else:
@@ -299,8 +280,35 @@ class SpawnerBehaviour(Behaviour):
         self.count = (self.count+1) % self.period
         if self.count == 0 and self.entity.current_spawnee < self.entity.max_spawnee:
             return 1
-        return 0                    
+        return 0  
 
+class ConsumeFood(Behaviour):
+    def __init__(self, entity, env):
+        super(ConsumeFood, self).__init__(entity, env)
+        self.entity = entity
+        self.env = env
+
+        self.state = "consumeFood"
+        self.label = "EAT"
+
+        self.count = -1
+        self.ttw = 0
+
+    def computePath(self):
+        self.path = []
+        return 1
+
+    def nextStep(self):
+        if self.count == -1:
+            self.ttw = self.entity.consumeFood()
+        elif self.count <= 0:
+            self.count = -1
+            return 1
+        else:
+            self.count -= 1
+            return 0
+
+        
 class Harvest(Behaviour):
     def __init__(self, entity, env, res):
         super(Harvest, self).__init__(entity, env)
@@ -309,6 +317,7 @@ class Harvest(Behaviour):
         self.res = res
 
         self.count = -1
+        self.qtt = 0
 
         self.state = "harvest"
         self.label = "HAR"
@@ -322,11 +331,13 @@ class Harvest(Behaviour):
             return -1
         
         if self.count == -1:
-            self.count = self.entity.collectRessource(self.res)
+            self.qtt = self.entity.collectRessource(self.res)
+            self.count = self.qtt * self.res.time_per_unit
             # print "harvest begin"
             return 0
         elif self.count <= 0:
             # print "harvest over"
+            self.entity.putInBagpack(self.res, self.qtt)
             self.count = -1
             return 1
         else:
