@@ -94,7 +94,9 @@ class DisplayLoadingThread(threading.Thread):
         print("join Loading display")
         super(DisplayLoadingThread, self).join(timeout)
 
-        
+def draw_button(surface, fill_color, outline_color, rect, border=1):
+    surface.fill(outline_color, rect)
+    surface.fill(fill_color, rect.inflate(-border*2, -border*2))   
 
 def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
 
@@ -135,6 +137,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     DISPLAY_DEBUG = debug_displ
     DISPLAY_OVERLAY = False
     DISPLAY_RELATION = False
+    DISPLAY_NAME = False
 
     pygame.init()
 
@@ -190,21 +193,47 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     
 
     #Buttons
+    offset_row1 = 10
+
     color_rect_button = basic_colors.BLUE
-    rect_button = pygame.Rect((main_surface_width + 10, main_surface_height*0.94), (info_surface_width*0.25, info_surface_height*0.05))
-    
-    color_quit_button = basic_colors.RED
-    quit_button = pygame.Rect((main_surface_width + info_surface_width*0.65, main_surface_height*0.94), 
-                                (info_surface_width*0.25, info_surface_height*0.05))
+    color_rect_button_base = basic_colors.BLUE
+    rect_button = pygame.Rect((main_surface_width + offset_row1, main_surface_height*0.94), (info_surface_width*0.25, info_surface_height*0.05))
+    offset_row1 = offset_row1 + rect_button.width
+
 
     color_pause_button = basic_colors.OLIVE
-    pause_button = pygame.Rect((main_surface_width + info_surface_width*0.35, main_surface_height*0.94), 
+    color_pause_button_base = basic_colors.OLIVE
+    pause_button = pygame.Rect((main_surface_width + offset_row1 * 1.2, main_surface_height*0.94), 
                                 (info_surface_width*0.25, info_surface_height*0.05))
+    offset_row1 = offset_row1 + pause_button.width
+    
+    color_quit_button = basic_colors.RED
+    color_quit_button_base = basic_colors.RED
+    quit_button = pygame.Rect((main_surface_width + offset_row1 * 1.2, main_surface_height*0.94), 
+                                (info_surface_width*0.25, info_surface_height*0.05))
+    offset_row1 = offset_row1 + quit_button.width
+
+    offset_row2 = 10
 
     color_info_button = basic_colors.YELLOW
-    info_button = pygame.Rect((main_surface_width + 10, main_surface_height*0.84), 
+    color_info_button_base = basic_colors.YELLOW
+    info_button = pygame.Rect((main_surface_width + offset_row2, main_surface_height*0.87), 
                                 (info_surface_width*0.25, info_surface_height*0.05))
     
+    offset_row2 = offset_row2 + info_button.width
+
+    color_name_button = basic_colors.YELLOW
+    color_name_button_base = basic_colors.YELLOW
+    name_info_button = pygame.Rect((main_surface_width + offset_row2 * 1.2, main_surface_height*0.87), 
+                                (info_surface_width*0.25, info_surface_height*0.05))
+    offset_row2 = offset_row2 + name_info_button.width
+    
+    color_relation_button = basic_colors.YELLOW
+    color_relation_button_base = basic_colors.YELLOW
+    relation_info_button = pygame.Rect((main_surface_width + offset_row2*1.2, main_surface_height*0.87), 
+                                (info_surface_width*0.25, info_surface_height*0.05))
+    offset_row2 = offset_row2 + relation_info_button.width
+
     q_time = []
 
     selected_npc = []
@@ -311,6 +340,20 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         else:
             color_info_button = basic_colors.YELLOW
 
+        if name_info_button.collidepoint(mp):
+            color_name_button = basic_colors.YELLOW_3
+        elif DISPLAY_NAME:
+            color_name_button = basic_colors.YELLOW_2
+        else:
+            color_name_button = basic_colors.YELLOW
+
+        if relation_info_button.collidepoint(mp):
+            color_relation_button = basic_colors.YELLOW_3
+        elif DISPLAY_RELATION:
+            color_relation_button = basic_colors.YELLOW_2
+        else:
+            color_relation_button = basic_colors.YELLOW
+
 
         #Single event control
         if not PROFIL:
@@ -318,15 +361,17 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 if event.type == pygame.KEYDOWN:
                     if event.key == K_ESCAPE :
                         run = False
+                    elif event.key == K_SPACE:
+                        paused = not paused
+                        handle_pause(paused)
                     elif event.key == K_d:
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
                     elif event.key == K_i:
                         info = not info
                     elif event.key == K_o:
                         DISPLAY_OVERLAY = not DISPLAY_OVERLAY
-                    elif event.key == K_SPACE:
-                        paused = not paused
-                        handle_pause(paused)
+                    elif event.key == K_n:
+                        DISPLAY_NAME = not DISPLAY_NAME
                     elif event.key == pygame.K_a and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for e in env.npcs:
                             e.selected_npc = True
@@ -357,6 +402,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                             handle_pause(paused)  
                         elif info_button.collidepoint(mp):
                             info = not info
+                        elif name_info_button.collidepoint(mp):
+                            DISPLAY_NAME = not DISPLAY_NAME
+                        elif relation_info_button.collidepoint(mp):
+                            DISPLAY_RELATION = not DISPLAY_RELATION
 
                         if alpha_surface.get_rect(topleft=topleft_alpha_surface).collidepoint(mp) and not selection_on:
                             selection_on = True
@@ -508,7 +557,7 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     r.resume()
             for e in env.npcs:
                 e.pause()
-                e.sprite.draw(screen, False)
+                e.sprite.draw(screen, DISPLAY_NAME)
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
                 e.resume()
@@ -579,8 +628,11 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 txt_hunger = "  - hunger : {}/{} - kind : {} cour : {}".format(str(e.hunger), str(e.hunger_max), str(e.kindness), str(e.courage))
                 displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
 
-                txt_behaviour = "  - state : {} | Last soc. int. : {}".format((e.behaviour.label if e.behaviour != None else "none"), e.last_social_interaction)
+                txt_behaviour = "  - state : {}".format((e.behaviour.label if e.behaviour != None else "none"))
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
+
+                txt_social = "  - Last soc. int. : {}".format(e.last_social_interaction)
+                displ_txt_social = font.render(txt_social, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
                 shift = shift + fontsize + 2
@@ -589,6 +641,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
                 shift = shift + fontsize
                 info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
+                shift = shift + fontsize
+                info_surface.blit(displ_txt_social, (10, shift + fontsize))
                 shift = shift + fontsize
 
                 for k in e.bagpack:
@@ -616,6 +670,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             paused_text = font.render("Pause (Spc)", True, basic_colors.BLACK)
 
             info_text = font.render("Info (I)", True, basic_colors.BLACK)
+            
+            name_info_text = font.render("Name (n)", True, basic_colors.BLACK)
+            
+            relation_info_text = font.render("Relation (r)", True, basic_colors.BLACK)
 
             #Blit and Flip surfaces
             window.blit(screen, (0, 0))
@@ -623,21 +681,35 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
             window.blit(select_rect_surface, (0, 0))
             window.blit(info_surface, (main_surface_width, 0))
 
-            pygame.draw.rect(window, color_quit_button, quit_button)
+            # pygame.draw.rect(window, color_quit_button, quit_button)
+            draw_button(window, color_quit_button, color_quit_button_base, quit_button, border=5)
             window.blit(quit_text, (quit_button.center[0] - (quit_text.get_width()/2), 
                 quit_button.center[1] - (quit_text.get_height()/2) ) )
 
-            pygame.draw.rect(window, color_rect_button, rect_button)
+            # pygame.draw.rect(window, color_rect_button, rect_button)
+            draw_button(window, color_rect_button, color_rect_button_base, rect_button, border=5)
             window.blit(rect_text, (rect_button.center[0] - (rect_text.get_width()/2), 
                 rect_button.center[1] - (rect_text.get_height()/2) ))
 
-            pygame.draw.rect(window, color_pause_button, pause_button)
+            # pygame.draw.rect(window, color_pause_button, pause_button)
+            draw_button(window, color_pause_button, color_pause_button_base, pause_button, border=5)
             window.blit(paused_text, (pause_button.center[0] - (paused_text.get_width()/2), 
                 pause_button.center[1] - (paused_text.get_height()/2) ) )
 
-            pygame.draw.rect(window, color_info_button, info_button)
+            # pygame.draw.rect(window, color_info_button, info_button)
+            draw_button(window, color_info_button, color_info_button_base, info_button, border=5)
             window.blit(info_text, (info_button.center[0] - (info_text.get_width()/2), 
                 info_button.center[1] - (info_text.get_height()/2) ) )
+
+            # pygame.draw.rect(window, color_name_button, name_info_button)
+            draw_button(window, color_name_button, color_name_button_base, name_info_button, border=5)
+            window.blit(name_info_text, (name_info_button.center[0] - (name_info_text.get_width()/2), 
+                name_info_button.center[1] - (name_info_text.get_height()/2) ) )
+
+            # pygame.draw.rect(window, color_relation_button, relation_info_button)
+            draw_button(window, color_relation_button, color_relation_button_base, relation_info_button, border=5)
+            window.blit(relation_info_text, (relation_info_button.center[0] - (relation_info_text.get_width()/2), 
+                relation_info_button.center[1] - (relation_info_text.get_height()/2) ) )
 
             pygame.display.flip()
 

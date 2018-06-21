@@ -108,6 +108,8 @@ class NPC(Entity):
         self.count_check_availaible_food = 0
         self.count_check_availaible_food_period = 50
 
+        self.no_social_interaction = 0
+
         #Inventory
         self.bagpack = {}
 
@@ -119,14 +121,18 @@ class NPC(Entity):
 
         self.harvester = random.random()*0.8 + 0.4
 
+        self.social = random.random()*0.8 + 0.4
+
         self.vision_radius = 150
 
         #MEMORY and SOCIAL
+        self.last_social_interaction = "None"
 
         self.neighbours = []
         self.neighbours_rect = []
 
         self.social_xp = {}
+        self.social_cooldown = 0
 
         self.memory = random.randint(800, 1200)
         self.known_food = {}
@@ -172,15 +178,37 @@ class NPC(Entity):
 
     def shareFoodMemory(self, other):
         if self.known_food:
+            self.last_social_interaction = "share food with {}".format(other.name)
+            other.last_social_interaction = "food shared by {}".format(self.name)
             for mf in self.known_food.keys():    
                 other.known_food[mf] = 0
             #add xp
-            self.social_xp[other] = min(self.social_xp[other] + 5, 100)
-            other.social_xp[self] = min(other.social_xp[self] + 10, 100)
+            self.social_xp[other] = min((self.social_xp[other] + 5) * other.social, 100)
+            other.social_xp[self] = min((other.social_xp[self] + 10) * self.social, 100)
+        else:
+            self.befriend(other)
 
     def insult(self, other):
-        self.social_xp[other] = max(self.social_xp[other] - 5, -100)
-        other.social_xp[self] = max(other.social_xp[self] - 15, -100)
+        #Change xp
+        self.last_social_interaction = "insult {}".format(other.name)
+        other.last_social_interaction = "insulted by {}".format(self.name)
+
+        self.social_xp[other] = max((self.social_xp[other] - 5) * other.social, -100)
+        other.social_xp[self] = max((other.social_xp[self] - 10) * self.social, -100)
+
+    def befriend(self, other):
+        self.last_social_interaction = "befriend {}".format(other.name)
+        other.last_social_interaction = "befriended by {}".format(self.name)
+
+        self.social_xp[other] = min((self.social_xp[other] + 2) * other.social, 100)
+        other.social_xp[self] = min((other.social_xp[self] + 2) * self.social, 100)
+
+    def snub(self, other):
+        self.last_social_interaction = "sbun {}".format(other.name)
+        other.last_social_interaction = "snubed by {}".format(self.name)
+
+        self.social_xp[other] = min((self.social_xp[other] - 2) * other.social, 100)
+        other.social_xp[self] = min((other.social_xp[self] - 2) * self.social, 100)
 
     def setNeigh_computation_thread(self, NCT):
         self.neigh_computation_thread = NCT
@@ -207,26 +235,33 @@ class NPC(Entity):
     def computeNeighbours(self):
         self.neighbours = self.neigh_computation_thread.neighbours[self]
 
-    def socialInteraction(self):
-        for n in self.neighbours:
-            interact = self.getInteractionProbability(n)
-            if self.isGoodFriend(n):
-                if random.random() < interact["p_interact_base"]:
-                    self.shareFoodMemory(n)
-            elif interact["nature"] == "good":
-                if random.random() < interact["p_interact_base"]:
-                    self.shareFoodMemory(n)
-            elif interact["nature"] == "neutral":
-                if random.random() < interact["p_interact_base"]:
-                    self.insult(n)
-                else:
-                    self.shareFoodMemory(n)
-            elif interact["nature"] == "bad":
-                if random.random() < interact["p_interact_base"]:
-                    self.insult(n)
-            elif self.isSwornEnnemy(n):
-                if random.random() < interact["p_interact_base"]:
-                    self.insult(n)
+    def socialInteraction(self, other):
+        interact = self.getInteractionProbability(other)
+        if self.isGoodFriend(other):
+            if random.random() < interact["p_interact_base"]:
+                self.shareFoodMemory(other)
+            else:
+                self.befriend(other)
+        elif interact["nature"] == "good":
+            if random.random() < interact["p_interact_base"]:
+                self.shareFoodMemory(other)
+            else:
+                self.befriend(other)
+        elif interact["nature"] == "neutral":
+            if random.random() < interact["p_interact_base"]:
+                self.insult(other)
+            else:
+                self.shareFoodMemory(other)
+        elif interact["nature"] == "bad":
+            if random.random() < interact["p_interact_base"]:
+                self.insult(other)
+            else:
+                self.snub(other)
+        elif self.isSwornEnnemy(other):
+            if random.random() < interact["p_interact_base"]:
+                self.insult(other)
+            else:
+                self.snub(other)
 
     def updateFoodMemory(self):
         torm = []
@@ -247,6 +282,8 @@ class NPC(Entity):
 
     def tick(self):
 
+        self.social_cooldown = max(self.social_cooldown - 1, 0)
+
         self.updateFoodMemory()
         if self._tick%10 == 0:
             self.env.pgo_obj.updatePosition(self)
@@ -264,8 +301,8 @@ class NPC(Entity):
             if self.hunger >= self.hunger_max:
                 self.die()
 
-        if self._tick%200 == 0:
-            self.socialInteraction()
+        # if self._tick%200 == 0:
+        #     self.socialInteraction()
 
         self._tick += 1
         if self._tick%1000 == 0:
@@ -353,6 +390,19 @@ class NPC(Entity):
         self.behaviour = behaviour.ConsumeFood(self, self.env)
         self.resume()
 
+    def setSocialInteractionBehaviour(self, other):
+        self.pause()
+        self.behaviour = behaviour.SocialInteraction(self, self.env, other)
+        self.social_cooldown = self.behaviour.cooldown
+        self.resume()
+
+    def setDefaultBehaviour(self):
+        if self.social_cooldown <= 0 and self.neighbours:
+            other = random.choice(self.neighbours)
+            self.setSocialInteractionBehaviour(other)
+        else:
+            self.setIdleBehaviour()
+
     def drawDebugCollision(self, surface):
         super(NPC, self).drawDebugCollision(surface)
         for c in filter(lambda a: a != None, self.behaviour.collision_debug):
@@ -389,17 +439,18 @@ class NPC(Entity):
             ns = self.behaviour.nextStep()
             # print ns
             if ns == -1:
-                self.setIdleBehaviour()
-            elif ((self.behaviour.state == "goto" 
-                        or self.behaviour.state == "wait" 
+                self.setDefaultBehaviour()
+            elif ((self.behaviour.label == "GT" 
+                        or self.behaviour.label == "W" 
                         or self.behaviour.label == "COFO"
-                        or self.behaviour.label == "EAT") 
+                        or self.behaviour.label == "EAT"
+                        or self.behaviour.label == "SOCINT") 
                         and ns == 1):
-                self.setIdleBehaviour()           
-            elif self.behaviour.state == "idle" and ns == 1:
+                self.setDefaultBehaviour()     
+            elif self.behaviour.label == "I" and ns == 1:
                 self.setWaitBehaviour(50)
         else:
-            self.setIdleBehaviour()
+            self.setDefaultBehaviour()
  
         self.pose.x += self.shift_x
         self.pose.y += self.shift_y

@@ -23,6 +23,8 @@ class Behaviour(object):
 
         self.target = self.entity.getPose()
 
+        self.cooldown = 0
+
     def computePath(self, _target, _target_rect=None):
 
         current_rect = self.env.getCurrentRect(self.entity.getPose())
@@ -345,6 +347,31 @@ class Harvest(Behaviour):
             # print self.count
             return 0
         
+class SocialInteraction(Behaviour):
+    def __init__(self, entity, env, other):
+        super(SocialInteraction, self).__init__(entity, env)
+        self.other = other
+
+        self.state = "socialinteraction"
+        self.label = "SOCINT"
+
+        self.time_taken = 150
+
+        self.cooldown = 300
+
+    def computePath(self):
+        return 1
+
+    def nextStep(self):
+        if self.time_taken > 0:
+            self.time_taken -= 1
+            return 0
+        elif self.time_taken <= 0:
+            self.entity.socialInteraction(self.other)
+            return 1
+
+        
+
 class RegrowBehaviour(Behaviour):
     def __init__(self, res, env, period):
         super(RegrowBehaviour, self).__init__(res, env)
