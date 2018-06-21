@@ -37,7 +37,7 @@ class NeighboursComputationThread(threading.Thread):
         self.running = not self.running
 
     def join(self, timeout):
-        print("NCT join")
+        # print("NCT join")
         super(NeighboursComputationThread, self).join(timeout)
 
     def run(self):
@@ -122,7 +122,7 @@ class ClosestFoodComputationThread(threading.Thread):
         self.running = not self.running
 
     def join(self, timeout):
-        print("CFCT join")
+        # print("CFCT join")
         super(ClosestFoodComputationThread, self).join(timeout)
 
     def computeClosestFood(self):

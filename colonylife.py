@@ -596,6 +596,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 pygame.draw.rect(screen, basic_colors.BLUE, r)
                 
             #Entities
+            for sp in env.spawners:
+                sp.pause()
+                sp.sprite.draw(screen, info)
+                sp.resume()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
                     r.pause()
@@ -607,10 +611,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
                 e.resume()
-            for sp in env.spawners:
-                sp.pause()
-                sp.sprite.draw(screen, info)
-                sp.resume()
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
