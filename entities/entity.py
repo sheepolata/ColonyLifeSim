@@ -172,7 +172,7 @@ class NPC(Entity):
 
     def level_up(self):
         self.global_xp = 0
-        self.global_xp_next_lvl *= 1.0
+        self.global_xp_next_lvl *= 1.05
 
         if random.random() < 0.5:
             self.hitpoint_max += 10
@@ -188,8 +188,6 @@ class NPC(Entity):
         #update values
         self.attack_damage = int(round(self.strength * 1.2))
         self.defense = 10 + (courage_max - self.courage) + int(round(self.strength * 0.33))
-
-
 
     def setInitialSocialXP(self):
         for npc in self.env.npcs:
@@ -212,7 +210,7 @@ class NPC(Entity):
             proba = (1 - ((1 / diff_kind) + (float(self.social_xp[other]) / (400)))) * 1.2
         else:
             nature = "neutral"
-            proba = 0.0
+            proba = 0.5
 
         return {"p_interact_base": proba, "nature": nature}
 
@@ -225,6 +223,8 @@ class NPC(Entity):
             #add xp
             self.social_xp[other] = min((self.social_xp[other] + 5) * other.social, 100)
             other.social_xp[self] = min((other.social_xp[self] + 10) * self.social, 100)
+
+            self.global_xp += 2
         else:
             self.befriend(other)
 
@@ -236,6 +236,9 @@ class NPC(Entity):
         self.social_xp[other] = max((self.social_xp[other] - 5) * other.social, -100)
         other.social_xp[self] = max((other.social_xp[self] - 10) * self.social, -100)
 
+        self.global_xp += 2
+
+
     def befriend(self, other):
         self.last_social_interaction = "befriend {}".format(other.name)
         other.last_social_interaction = "befriended by {}".format(self.name)
@@ -243,12 +246,18 @@ class NPC(Entity):
         self.social_xp[other] = min((self.social_xp[other] + 2) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 2) * self.social, 100)
 
+        self.global_xp += 1
+
+
     def snub(self, other):
         self.last_social_interaction = "sbun {}".format(other.name)
         other.last_social_interaction = "snubed by {}".format(self.name)
 
         self.social_xp[other] = min((self.social_xp[other] - 2) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] - 2) * self.social, 100)
+
+        self.global_xp += 1
+
 
     def setNeigh_computation_thread(self, NCT):
         self.neigh_computation_thread = NCT
@@ -289,9 +298,9 @@ class NPC(Entity):
                 self.befriend(other)
         elif interact["nature"] == "neutral":
             if random.random() < interact["p_interact_base"]:
-                self.insult(other)
+                self.snub(other)
             else:
-                self.shareFoodMemory(other)
+                self.befriend(other)
         elif interact["nature"] == "bad":
             if random.random() < interact["p_interact_base"]:
                 self.insult(other)

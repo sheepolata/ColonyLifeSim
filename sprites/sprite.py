@@ -47,10 +47,10 @@ def drawRelations(line_surface, list_npcs):
             elif npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 0, 25)*5 + 1))
             elif npc.social_xp[n] > 25:
-                c = (0, 100*utils.normalise(npc.social_xp[n], 25, 100)+155, 0, 128)
+                c = (0, min(100*utils.normalise(npc.social_xp[n], 25, 100)+155, 255), 0, 128)
                 pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 25, 100)*5 + 1))
             elif npc.social_xp[n] < -25:
-                c = (100*utils.normalise(npc.social_xp[n], -25, -100)+155, 0, 0, 128)
+                c = (min(100*utils.normalise(npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
                 pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, -100)*5 + 1))
 
 class SpriteNPC(SpriteEntityBase):
