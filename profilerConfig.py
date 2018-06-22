@@ -1,3 +1,4 @@
+import sprites.sprite as sp
 
 global profiler_config
 
@@ -13,11 +14,26 @@ def clear():
         "FORCED_FPS":0,
         "TOTAL_QUITTING_THREAD":0,
         "CURRENT_QUITTING_THREAD":0,
-        "CURRENT_QUIT_THREAD_NAME":"none"
+        "CURRENT_QUIT_THREAD_NAME":"none",
+        "INTERACTION_DISPLAY":[]
     }
     
 clear()
     
+def add_relation_sprite(e1, e2, label, color):
+    append_to("INTERACTION_DISPLAY", {"sprite":sp.relationSprite(e1, e2, label, color), "cooldown":75})
+
+def draw_relation_sprites(screen, paused):
+    global profiler_config
+    torm = []
+    for rsp in profiler_config["INTERACTION_DISPLAY"]:
+        rsp["sprite"].draw(screen)
+        if not paused:
+            rsp["cooldown"] -= 1
+            if rsp["cooldown"] <= 0:
+                torm.append(rsp)
+    profiler_config["INTERACTION_DISPLAY"] = [x for x in profiler_config["INTERACTION_DISPLAY"] if not x in torm]
+
 def append_to(name, value, _max=-1):
     global profiler_config
     if isinstance(profiler_config[name], list):

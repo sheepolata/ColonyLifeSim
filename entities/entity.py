@@ -94,6 +94,7 @@ class NPC(Entity):
 
         self.shift_x = 0
         self.shift_y = 0
+
         self.speed = round(random.random()*0.6, 2) + 0.4
 
         self._tick = 0
@@ -132,6 +133,8 @@ class NPC(Entity):
         #MEMORY and SOCIAL
         self.last_social_interaction = "None"
 
+        self.interaction_range = 90
+
         self.neighbours = []
         self.neighbours_rect = []
 
@@ -142,9 +145,9 @@ class NPC(Entity):
         self.known_food = {}
 
         #cowardliness 0 ... 10 courage
-        courage_max = 10
-        courage_min = 0
-        self.courage = random.randint(courage_min, courage_max)
+        self.courage_min = 0
+        self.courage_max = 10
+        self.courage = random.randint(self.courage_min, self.courage_max)
         # self.courage = random.choice([0, 1])
 
         #aggressivness 0 ... 10 kindness
@@ -152,11 +155,13 @@ class NPC(Entity):
         # self.kindness = random.choice([0, 1])
 
         #Attack
+        self.attack_range = 50
+
         self.attack = (self.courage) + 3
         
-        str_min = 0
-        str_max = 5
-        self.strength = random.randint(str_min, str_max) + int(round(self.courage * 0.33))
+        self.str_min = 0
+        self.str_max = 5
+        self.strength = random.randint(self.str_min, self.str_max) + int(round(self.courage * 0.33))
         self.attack_damage = int(round(self.strength * 1.2))
 
         self.attack_dice = [1, 4]
@@ -165,19 +170,28 @@ class NPC(Entity):
         self.hitpoint_max = 100
         self.hitpoint = self.hitpoint_max
 
-        self.defense = 10 + (courage_max - self.courage) + int(round(self.strength * 0.33))
+        self.defense = 10 + (self.courage_max - self.courage) + int(round(self.strength * 0.33))
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
 
     def level_up(self):
-        self.global_xp = 0
-        self.global_xp_next_lvl *= 1.05
+        self.level += 1
+
+        self.global_xp = self.global_xp%int(self.global_xp_next_lvl)
+        self.global_xp_next_lvl = int(round(self.global_xp_next_lvl * 1.10))
 
         if random.random() < 0.5:
             self.hitpoint_max += 10
+            self.hitpoint += 10
+        if random.random() < 0.38:
+            self.memory += 50
         if random.random() < 0.3:
             self.strength += 1
+        if random.random() < 0.18:
+             self.harvester += 0.05 
+        if random.random() < 0.18:
+            self.social += 0.05 
         if random.random() < 0.15:
             self.attack += 1
         if random.random() < 0.1:
@@ -187,8 +201,16 @@ class NPC(Entity):
 
         #update values
         self.attack_damage = int(round(self.strength * 1.2))
-        self.defense = 10 + (courage_max - self.courage) + int(round(self.strength * 0.33))
+        self.defense = 10 + (self.courage_max - self.courage) + int(round(self.strength * 0.33))
 
+    def getAttackProbability(self):
+        vmax = self.courage_max*1.33 + self.str_max + self.hitpoint_max
+        vmin = self.courage_min*1.33 + self.str_min + self.hitpoint_max
+
+        vcurr = self.courage + self.strength + self.hitpoint
+
+        return utils.normalise(vcurr, vmin, vmax)
+        
     def setInitialSocialXP(self):
         for npc in self.env.npcs:
             self.social_xp[npc] = 0
@@ -198,19 +220,19 @@ class NPC(Entity):
 
         if self.isGoodFriend(other):
             nature = "good"
-            proba = ((1 / diff_kind) + (float(self.social_xp[other]) / (400))) * 1.2
+            proba = ((1 / diff_kind) + (float(self.social_xp[other]) / (400.0))) * 1.2
         elif self.isFriend(other):
             nature = "good"
-            proba = (1 / diff_kind) + (float(self.social_xp[other]) / (400))
+            proba = (1 / diff_kind) + (float(self.social_xp[other]) / (400.0))
         elif self.isEnnemy(other):
             nature = "bad"
-            proba = 1 - ((1 / diff_kind) + (float(self.social_xp[other]) / (400)))
+            proba = (1 - ((1 / diff_kind)) - (float(self.social_xp[other]) / (400.0)))
         elif self.isSwornEnnemy(other):
             nature = "bad"
-            proba = (1 - ((1 / diff_kind) + (float(self.social_xp[other]) / (400)))) * 1.2
+            proba = ((1 - (1 / diff_kind)) - (float(self.social_xp[other]) / (400.0))) * 1.2
         else:
             nature = "neutral"
-            proba = 0.5
+            proba = 0.5 + (float(self.social_xp[other]) / (400.0))
 
         return {"p_interact_base": proba, "nature": nature}
 
@@ -221,10 +243,12 @@ class NPC(Entity):
             for mf in self.known_food.keys():    
                 other.known_food[mf] = 0
             #add xp
-            self.social_xp[other] = min((self.social_xp[other] + 5) * other.social, 100)
-            other.social_xp[self] = min((other.social_xp[self] + 10) * self.social, 100)
+            self.social_xp[other] = min((self.social_xp[other] + 3) * other.social, 100)
+            other.social_xp[self] = min((other.social_xp[self] + 5) * self.social, 100)
 
             self.global_xp += 2
+
+            pc.add_relation_sprite(self, other, "share food", basic_colors.LIME)
         else:
             self.befriend(other)
 
@@ -233,10 +257,13 @@ class NPC(Entity):
         self.last_social_interaction = "insult {}".format(other.name)
         other.last_social_interaction = "insulted by {}".format(self.name)
 
-        self.social_xp[other] = max((self.social_xp[other] - 5) * other.social, -100)
-        other.social_xp[self] = max((other.social_xp[self] - 10) * self.social, -100)
+        self.social_xp[other] = max((self.social_xp[other] - 3) * other.social, -100)
+        other.social_xp[self] = max((other.social_xp[self] - 5) * self.social, -100)
 
         self.global_xp += 2
+
+        pc.add_relation_sprite(self, other, "insult", basic_colors.RED)
+
 
 
     def befriend(self, other):
@@ -248,6 +275,9 @@ class NPC(Entity):
 
         self.global_xp += 1
 
+        pc.add_relation_sprite(self, other, "befriend", basic_colors.LIME)
+
+
 
     def snub(self, other):
         self.last_social_interaction = "sbun {}".format(other.name)
@@ -257,6 +287,36 @@ class NPC(Entity):
         other.social_xp[self] = min((other.social_xp[self] - 2) * self.social, 100)
 
         self.global_xp += 1
+
+        pc.add_relation_sprite(self, other, "snub", basic_colors.RED)
+
+
+    def attack_other(self, other):
+        self.social_xp[other] = min((self.social_xp[other] - 10) * other.social, 100)
+        other.social_xp[self] = min((other.social_xp[self] - 10) * self.social, 100)
+
+        atck_value = random.randint(1, 20) + self.attack
+        if atck_value >= other.defense:
+            damage_value = self.attack_damage
+            for i in range(self.attack_dice[0]):
+                damage_value += random.randint(1, self.attack_dice[1])
+
+            other.hitpoint -= damage_value
+
+            self.global_xp += 8
+
+            self.last_social_interaction = "attack {} for {} dmg! ".format(other.name, damage_value)
+            other.last_social_interaction = "attacked by {}, took {} dmg!".format(self.name, damage_value)
+
+            pc.add_relation_sprite(self, other, "attack succeeds", basic_colors.RED)
+
+        else:
+            self.last_social_interaction = "attack {}: failed! ".format(other.name)
+            other.last_social_interaction = "attacked by {}, defended!".format(self.name)
+
+            other.global_xp += 8
+
+            pc.add_relation_sprite(self, other, "attack failed", basic_colors.RED)
 
 
     def setNeigh_computation_thread(self, NCT):
@@ -286,11 +346,14 @@ class NPC(Entity):
 
     def socialInteraction(self, other):
         interact = self.getInteractionProbability(other)
-        if self.isGoodFriend(other):
-            if random.random() < interact["p_interact_base"]:
-                self.shareFoodMemory(other)
-            else:
-                self.befriend(other)
+
+        if utils.distance2p(self.getPose(), other.getPose()) < self.attack_range and (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
+            self.attack_other(other)
+        # elif self.isGoodFriend(other):
+        #     if random.random() < interact["p_interact_base"]:
+        #         self.shareFoodMemory(other)
+        #     else:
+        #         self.befriend(other)
         elif interact["nature"] == "good":
             if random.random() < interact["p_interact_base"]:
                 self.shareFoodMemory(other)
@@ -306,11 +369,11 @@ class NPC(Entity):
                 self.insult(other)
             else:
                 self.snub(other)
-        elif self.isSwornEnnemy(other):
-            if random.random() < interact["p_interact_base"]:
-                self.insult(other)
-            else:
-                self.snub(other)
+        # elif self.isSwornEnnemy(other):
+        #     if random.random() < interact["p_interact_base"]:
+        #         self.insult(other)
+        #     else:
+        #         self.snub(other)
 
     def updateFoodMemory(self):
         torm = []
@@ -325,17 +388,14 @@ class NPC(Entity):
         for cf in self.closestfood_computation_thread.closestFood[self]:
             self.known_food[cf] = 0
 
-        # for f in self.env.ressources["food"]:
-        #     if not pf.checkStraightPath(self.env, self.getPose(), f.getPose(), 10, check_river=False) and utils.distance2p(self.getPose(), f.getPose()) <= self.vision_radius:
-        #         self.known_food[f] = 0
-
     def tick(self):
+        self.getAttackProbability()
         if self.global_xp >= self.global_xp_next_lvl:
             self.level_up()
 
         self.social_cooldown = max(self.social_cooldown - 1, 0)
 
-        self.updateFoodMemory()
+        self.updateFoodMemory() 
         if self._tick%10 == 0:
             self.env.pgo_obj.updatePosition(self)
 
@@ -349,8 +409,9 @@ class NPC(Entity):
 
         if self._tick%50 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
-            if self.hunger >= self.hunger_max:
-                self.die()
+        if self.hunger >= self.hunger_max \
+            or self.hitpoint <= 0:
+            self.die()
 
         # if self._tick%200 == 0:
         #     self.socialInteraction()
@@ -449,8 +510,12 @@ class NPC(Entity):
 
     def setDefaultBehaviour(self):
         if self.social_cooldown <= 0 and self.neighbours:
-            other = random.choice(self.neighbours)
-            self.setSocialInteractionBehaviour(other)
+            l = [x for x in self.neighbours if utils.distance2p(self.getPose(), x.getPose()) < self.interaction_range]
+            if l:
+                other = random.choice(l)
+                self.setSocialInteractionBehaviour(other)
+            else:
+                self.setIdleBehaviour()
         else:
             self.setIdleBehaviour()
 

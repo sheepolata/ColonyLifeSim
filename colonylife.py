@@ -617,6 +617,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     e.sprite.drawDead(screen)
                 e.resume()
             
+            pc.draw_relation_sprites(screen, paused)
+            
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
                 selection_rect.draw(select_rect_surface)
