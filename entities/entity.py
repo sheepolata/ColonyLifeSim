@@ -125,6 +125,10 @@ class NPC(Entity):
 
         self.vision_radius = 150
 
+        self.level = 0
+        self.global_xp = 0
+        self.global_xp_next_lvl = 100
+
         #MEMORY and SOCIAL
         self.last_social_interaction = "None"
 
@@ -138,7 +142,9 @@ class NPC(Entity):
         self.known_food = {}
 
         #cowardliness 0 ... 10 courage
-        self.courage = random.randint(0, 10)
+        courage_max = 10
+        courage_min = 0
+        self.courage = random.randint(courage_min, courage_max)
         # self.courage = random.choice([0, 1])
 
         #aggressivness 0 ... 10 kindness
@@ -146,10 +152,44 @@ class NPC(Entity):
         # self.kindness = random.choice([0, 1])
 
         #Attack
+        self.attack = (self.courage) + 3
+        
+        str_min = 0
+        str_max = 5
+        self.strength = random.randint(str_min, str_max) + int(round(self.courage * 0.33))
+        self.attack_damage = int(round(self.strength * 1.2))
+
+        self.attack_dice = [1, 4]
+
         #Defense
+        self.hitpoint_max = 100
+        self.hitpoint = self.hitpoint_max
+
+        self.defense = 10 + (courage_max - self.courage) + int(round(self.strength * 0.33))
 
         #graphics
         self.sprite = sprites.sprite.SpriteNPC(basic_colors.CYAN, self.pose, self)
+
+    def level_up(self):
+        self.global_xp = 0
+        self.global_xp_next_lvl *= 1.0
+
+        if random.random() < 0.5:
+            self.hitpoint_max += 10
+        if random.random() < 0.3:
+            self.strength += 1
+        if random.random() < 0.15:
+            self.attack += 1
+        if random.random() < 0.1:
+            self.attack_dice[1] += 1
+        if random.random() < 0.05:
+            self.attack_dice[0] += 1
+
+        #update values
+        self.attack_damage = int(round(self.strength * 1.2))
+        self.defense = 10 + (courage_max - self.courage) + int(round(self.strength * 0.33))
+
+
 
     def setInitialSocialXP(self):
         for npc in self.env.npcs:
@@ -281,6 +321,8 @@ class NPC(Entity):
         #         self.known_food[f] = 0
 
     def tick(self):
+        if self.global_xp >= self.global_xp_next_lvl:
+            self.level_up()
 
         self.social_cooldown = max(self.social_cooldown - 1, 0)
 
@@ -444,7 +486,8 @@ class NPC(Entity):
                         or self.behaviour.label == "W" 
                         or self.behaviour.label == "COFO"
                         or self.behaviour.label == "EAT"
-                        or self.behaviour.label == "SOCINT") 
+                        or self.behaviour.label == "SOCINT"
+                        or self.behaviour.label == "EAT") 
                         and ns == 1):
                 self.setDefaultBehaviour()     
             elif self.behaviour.label == "I" and ns == 1:

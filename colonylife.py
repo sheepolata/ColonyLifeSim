@@ -425,6 +425,9 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                     elif event.key == K_SPACE:
                         paused = not paused
                         handle_pause(paused)
+                    elif event.key == K_DELETE:
+                        for n in selected_npc:
+                            n.die()
                     elif event.key == K_d:
                         DISPLAY_DEBUG = not DISPLAY_DEBUG
                     elif event.key == K_i:
@@ -610,6 +613,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 e.sprite.draw(screen, DISPLAY_NAME)
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
+                if e.dead:
+                    e.sprite.drawDead(screen)
                 e.resume()
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
@@ -664,20 +669,18 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 shift = shift + fontsize + 2
 
             for e in selected_npc[shift_list_ent_inf:shift_list_ent_sup]:
-                txt_basic = e.name + " (" + str(round(e.pose.x, 2)) + ", " + str(round(e.pose.y, 2)) + ")"
-                displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
-
-                txt_stat1 = "  - speed : {}  memory : {}".format(str(e.speed), str(e.memory))
-                displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
-
-                # txt_hunger = "     hunger : " + str(e.hunger)  + " (have to eat ? " + str(e.have_to_eat) + ")"
-                txt_hunger = "  - hunger : {}/{} - kind : {} cour : {}".format(str(e.hunger), str(e.hunger_max), str(e.kindness), str(e.courage))
-                displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
-
+                txt_basic     = "{} lvl {} | {}/{} HP | {}/{} XP".format(e.name, e.level, e.hitpoint, e.hitpoint_max, e.global_xp, e.global_xp_next_lvl)
+                txt_stat1     = "  - speed : {}  memory : {}".format(str(e.speed), str(e.memory))
+                txt_hunger    = "  - hunger : {}/{} - Kin : {} Cou : {} Str : {}".format(e.hunger, e.hunger_max, e.kindness, e.courage, e.strength)
+                txt_stat2     = "  - Atck : +{} ({}d{}+{}) | Def : {}".format(e.attack, e.attack_dice[0], e.attack_dice[1], e.attack_damage, e.defense)
                 txt_behaviour = "  - state : {}".format((e.behaviour.label if e.behaviour != None else "none"))
+                txt_social    = "  - Last soc. int. : {}".format(e.last_social_interaction)
+                
+                displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
+                displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
+                displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
+                displ_txt_stat2 = font.render(txt_stat2, True, basic_colors.BLACK)
                 displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
-
-                txt_social = "  - Last soc. int. : {}".format(e.last_social_interaction)
                 displ_txt_social = font.render(txt_social, True, basic_colors.BLACK)
 
                 info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
@@ -685,6 +688,8 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 info_surface.blit(displ_txt_stat1, (10, shift + fontsize))
                 shift = shift + fontsize
                 info_surface.blit(displ_txt_hunger, (10, shift + fontsize))
+                shift = shift + fontsize
+                info_surface.blit(displ_txt_stat2, (10, shift + fontsize))
                 shift = shift + fontsize
                 info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
                 shift = shift + fontsize

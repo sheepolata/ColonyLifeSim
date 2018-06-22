@@ -61,21 +61,22 @@ class SpriteNPC(SpriteEntityBase):
     def draw(self, screen, info):
         super(SpriteNPC, self).draw(screen)
 
+
         if info:
             text = self.npc.name
             font = pygame.font.SysFont('Sans', 10)
             displ_text = font.render(text, True, basic_colors.BLACK)
             screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
+    def drawDead(self, screen):
+        pygame.draw.line(screen, basic_colors.ALPHA_RED, self.rect.topleft, self.rect.bottomright, 2)
+        pygame.draw.line(screen, basic_colors.ALPHA_RED, self.rect.topright, self.rect.bottomleft, 2)
+
+
     def drawSelected(self, screen, line_surface, color):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
         
         pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, self.npc.vision_radius, 1)
-        # r = pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, entity.vision_radius, 1)
-        # pygame.draw.rect(line_surface, basic_colors.ALPHA_RED_2, r, 1)
-
-        # for r in self.npc.env.pgo_obj.getRectInRangeStrict(self.npc):
-        #     pygame.draw.rect(line_surface, basic_colors.ALPHA_WHITE, r, 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)
@@ -121,8 +122,14 @@ class SpriteRessource(SpriteEntityBase):
 
         super(SpriteRessource, self).__init__(color, pose)
 
+        self.size = 4
+
     def draw(self, screen, alpha_surface, info):
-        super(SpriteRessource, self).draw(screen)
+        # super(SpriteRessource, self).draw(screen)
+        s = int((self.ressource.value / self.ressource.max_value)*self.size + 2) if self.ressource.max_value != 0 else self.size
+        pygame.draw.circle(screen, self.color, self.rect.center, s)
+
+
         if not self.ressource.harvestable:
             pygame.draw.circle(alpha_surface, self.color_non_havestable, self.rect.center, self.size)
 

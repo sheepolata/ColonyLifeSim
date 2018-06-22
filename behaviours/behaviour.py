@@ -25,6 +25,11 @@ class Behaviour(object):
 
         self.cooldown = 0
 
+        try:
+            self.near_treshold = self.entity.speed + 1
+        except AttributeError:
+            self.near_treshold = 0
+
     def computePath(self, _target, _target_rect=None):
 
         current_rect = self.env.getCurrentRect(self.entity.getPose())
@@ -67,12 +72,10 @@ class Behaviour(object):
         if self.ipath >= len(self.path):
             return 1
 
-
-
         self.target = self.path[self.ipath]
 
         # print self.target
-        if utils.near(self.entity.getPose(), self.target, _thresh=self.entity.speed + 1):
+        if utils.near(self.entity.getPose(), self.target, _thresh=self.near_treshold):
             self.ipath_prev = self.ipath
             self.ipath += 1
             self.entity.shift_x = 0
@@ -171,6 +174,8 @@ class GOTORessource(GOTOBehaviour):
     def __init__(self, entity, env, ressource):
         self.ressource = ressource
         super(GOTORessource, self).__init__(entity, env, self.ressource.getPose())
+
+        self.near_treshold = self.ressource.sprite.size
 
         self.state = "gotoressource"
         self.label = "GTR"
@@ -303,6 +308,7 @@ class ConsumeFood(Behaviour):
     def nextStep(self):
         if self.count == -1:
             self.ttw = self.entity.consumeFood()
+            self.count = self.ttw
         elif self.count <= 0:
             self.count = -1
             return 1
