@@ -15,6 +15,8 @@ class NeighboursComputationThread(threading.Thread):
 
         self.env = env
 
+        self.name = "NCT"
+
         self.neighbours = {}
         for focus in self.env.npcs:
             self.neighbours[focus] = []
@@ -35,7 +37,7 @@ class NeighboursComputationThread(threading.Thread):
         self.running = not self.running
 
     def join(self, timeout):
-        print("NCT join")
+        # print("NCT join")
         super(NeighboursComputationThread, self).join(timeout)
 
     def run(self):
@@ -98,6 +100,8 @@ class ClosestFoodComputationThread(threading.Thread):
         self.env = env
         self.running = True
 
+        self.name = "CFCT"
+
         self.closestFood = {}
         for focus in env.npcs:
             self.closestFood[focus] = []
@@ -118,7 +122,7 @@ class ClosestFoodComputationThread(threading.Thread):
         self.running = not self.running
 
     def join(self, timeout):
-        print("CFCT join")
+        # print("CFCT join")
         super(ClosestFoodComputationThread, self).join(timeout)
 
     def computeClosestFood(self):

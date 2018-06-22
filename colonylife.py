@@ -95,10 +95,11 @@ class DisplayLoadingThread(threading.Thread):
         super(DisplayLoadingThread, self).join(timeout)
 
 class QuitScreenThead(threading.Thread):        
-    def __init__(self):
-        super(DisplayLoadingThread, self).__init__()
+    def __init__(self, timeout=2):
+        super(QuitScreenThead, self).__init__()
     
         self.daemon = True
+        self.timeout = timeout
 
         monitor = get_monitors()[0]
         
@@ -108,8 +109,51 @@ class QuitScreenThead(threading.Thread):
         self.window = pygame.display.set_mode((screen_width, screen_height))
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % ((monitor.width/2)-(screen_width/2),(monitor.height/2)-(screen_height/2))
 
-
         self.is_running = True
+
+    def run(self):
+        while self.is_running:
+            self.window.fill(basic_colors.BLACK)
+
+            fontsize = int(self.window.get_height()*0.2)
+            font = pygame.font.SysFont('Sans', fontsize)
+
+            text1 = font.render("Quitting...", True, basic_colors.WHITE)
+            self.window.blit(text1, (self.window.get_rect().center[0] - (text1.get_width()/2),
+                            self.window.get_height()*0.17 ) )
+
+            fontsize2 = int(self.window.get_height()*0.12)
+            font2 = pygame.font.SysFont('Sans', fontsize2)
+
+            text2 = font2.render(pc.get("CURRENT_QUIT_THREAD_NAME"), True, basic_colors.WHITE)
+            self.window.blit(text2, (self.window.get_rect().center[0] - (text2.get_width()/2), 
+                            int(self.window.get_height()*0.4) ) )
+
+
+            max_load_rect = self.window.get_rect().width * 0.8
+            rect_load = pygame.Rect((self.window.get_rect().width*0.1, self.window.get_rect().height*0.7), (max_load_rect, 70))
+            rect_load_current = pygame.Rect((self.window.get_rect().width*0.1, self.window.get_rect().height*0.7), (int(max_load_rect*(float(pc.get("CURRENT_QUITTING_THREAD"))/float(pc.get("TOTAL_QUITTING_THREAD")))), 70))
+            
+            fontsize3 = int(self.window.get_height()*0.05)
+            font3 = pygame.font.SysFont('Sans', fontsize3)
+
+            pygame.draw.rect(self.window, basic_colors.WHITE, rect_load.inflate(5, 5), 5)
+            pygame.draw.rect(self.window, basic_colors.RED, rect_load_current)
+            
+            text3 = font3.render("{}%".format(round((float(pc.get("CURRENT_QUITTING_THREAD"))/float(pc.get("TOTAL_QUITTING_THREAD")))*100), 2), True, basic_colors.WHITE)
+            self.window.blit(text3, (rect_load.center[0] - (text3.get_width()/2), 
+                            rect_load.center[1] - (text3.get_height()/2) ) )
+
+            pygame.display.flip()
+
+    def stop(self):
+        print("stop Quit display")
+        self.is_running = False
+
+    def join(self):
+        print("join Quit display")
+        super(QuitScreenThead, self).join(self.timeout)
+
 
 def draw_button(surface, fill_color, outline_color, rect, border=1):
     surface.fill(outline_color, rect)
@@ -489,21 +533,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
         if PROFIL:
             T_LOGIC = time.time()
 
-        # env.pgo_obj.updateAllPosition()
-
-        # if not paused:
-        #     #Logic
-        #     #play each entity
-        #     for e in env.npcs:
-        #         #slow as fuck
-        #         e.update()
-        #     for r in env.spawners:
-        #         r.update()
-            # for kr in env.ressources.keys():
-        #         for r in env.ressources[kr]:
-        #             r.update()
-        #         env.ressources[kr] = [x for x in env.ressources[kr] if not x.dead]
-
         #Remove dead entities            
         for kr in env.ressources.keys():
             for deadres in [x for x in env.ressources[kr] if x.dead]:
@@ -567,6 +596,10 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 pygame.draw.rect(screen, basic_colors.BLUE, r)
                 
             #Entities
+            for sp in env.spawners:
+                sp.pause()
+                sp.sprite.draw(screen, info)
+                sp.resume()
             for kr in env.ressources.keys():
                 for r in env.ressources[kr]:
                     r.pause()
@@ -578,10 +611,6 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
                 if e in selected_npc:
                     e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
                 e.resume()
-            for sp in env.spawners:
-                sp.pause()
-                sp.sprite.draw(screen, info)
-                sp.resume()
             
             if selection_rect != None and hasattr(selection_rect, "rect"):
                 # print selection_rect.rect
@@ -747,24 +776,52 @@ def main(nb_npc=10, nb_obs=10, nb_spawner=2, _profiler=-1, DISPLAY=True, debug_d
     for e in env.npcs:
         e.die()
         e.update()
-        e.join(2)
+        # e.join(2)
 
     for sp in env.spawners:
         sp.die()
         sp.update()
-        sp.join(2)
+        # sp.join(2)
 
     for kr in env.ressources.keys():
         for r in env.ressources[kr]:
             r.die()
             r.update()
-            r.join(2)
-
+            # r.join(2)
+    
     NCT.stop()
-    NCT.join(2)
-
     CFCT.stop()
-    CFCT.join(2)
+
+    quittin_screen_thread = QuitScreenThead()
+
+    quittin_screen_thread.start()    
+
+    th_list_kill = []
+    th_list_kill.extend(env.npcs)
+    th_list_kill.extend(env.spawners)
+    for kr in env.ressources.keys():
+        th_list_kill.extend(env.ressources[kr])
+    th_list_kill.append(NCT)
+    th_list_kill.append(CFCT)
+
+    pc.set("TOTAL_QUITTING_THREAD", len(th_list_kill))
+
+    i = 0
+    for t in th_list_kill:
+        i += 1
+        pc.set("CURRENT_QUIT_THREAD_NAME", t.name)
+        t.join(2)
+        pc.set("CURRENT_QUITTING_THREAD", i)
+        time.sleep(0.05)
+
+    quittin_screen_thread.stop()
+    quittin_screen_thread.join()    
+
+    # NCT.stop()
+    # NCT.join(2)
+
+    # CFCT.stop()
+    # CFCT.join(2)
 
     print("End !")
 

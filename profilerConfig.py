@@ -10,7 +10,10 @@ def clear():
         "NB_NPC" : [],
         "ENV_CONSTR_TRACK": {"scope":"none","current":0, "max":0, "percent":0.0},
         "TIME_INIT": 0,
-        "FORCED_FPS":0
+        "FORCED_FPS":0,
+        "TOTAL_QUITTING_THREAD":0,
+        "CURRENT_QUITTING_THREAD":0,
+        "CURRENT_QUIT_THREAD_NAME":"none"
     }
     
 clear()

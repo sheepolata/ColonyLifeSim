@@ -76,7 +76,7 @@ class Entity(threading.Thread):
         self.sprite.update(self.pose)
 
     def die(self):
-        print(self.name, "killed")
+        # print(self.name, "killed")
 
         self.dead = True
         self.resume()
@@ -485,7 +485,7 @@ class Ressource(Entity):
 
         self.used = False
 
-        self.time_per_unit = 8
+        self.time_per_unit = 4
 
         self.spawner = spawner
 
@@ -537,8 +537,8 @@ class Ressource(Entity):
         elif self.value <= 0:
             self.die()
 
-    def getSome(self, factor):
-        v = round(factor, 2) 
+    def getSome(self, qtt):
+        v = round(qtt, 2) 
         v = v if self.value >= v else self.value
         self.value -= v
         if self.value <= 0:
