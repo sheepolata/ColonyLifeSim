@@ -95,8 +95,6 @@ class NPC(Entity):
         self.shift_x = 0
         self.shift_y = 0
 
-        self.speed = round(random.random()*0.6, 2) + 0.4
-
         self._tick = 0
 
         self.target_res = None
@@ -120,19 +118,25 @@ class NPC(Entity):
         self.hunger_max = self.hunger_thresh + 30
         self.have_to_eat = False
 
+        self.speed = round(random.random()*0.6, 2) + 0.4
         self.harvester = random.random()*0.8 + 0.4
-
         self.social = random.random()*0.8 + 0.4
 
         self.vision_radius = 150
+
 
         self.level = 0
         self.global_xp = 0
         self.global_xp_next_lvl = 40
 
+        self.parents = [None, None]
+        self.generation = 0
+        self.age = 14
+
         #MEMORY and SOCIAL
         self.will_reproduce = False
         self.partner = None
+        self.reproduction_cd = 0
 
         self.last_social_interaction = "None"
 
@@ -201,6 +205,9 @@ class NPC(Entity):
         if random.random() < 0.44:
             self.regen_hitpoint += 0.001
         if random.random() < 0.38:
+            self.hunger_max    += 8
+            self.hunger_thresh += 4
+        if random.random() < 0.38:
             self.memory += 50
         if random.random() < 0.3:
             self.strength += 1
@@ -220,16 +227,24 @@ class NPC(Entity):
         self.defense = 10 + (self.courage_max - self.courage) + int(round(self.strength * 0.33))
 
     def giveBirth(self, other):
+        self.reproduction_cd = 1800
+
         child = NPC(self.env, name="npc"+str(self.env.idNPC))
+
+        child.parents = [self, other]
+        child.age = 0
+        child.generation = max(self.generation, other.generation) + 1
 
         child.setPose(int(self.pose.x + other.pose.x)/2, int(self.pose.y + other.pose.y)/2)
 
-        if random.random() < 0.1: #Mutation
+        mutation = 0.4
+
+        if random.random() < mutation*1.25: #Mutation
             child.courage = random.randint(child.courage_min, child.courage_max)
         else: #Genetic passage
             child.courage = int(round((self.courage + other.courage) / 2.0))
 
-        if random.random() < 0.1: #Mutation
+        if random.random() < mutation*1.25: #Mutation
             child.kindness = random.randint(child.kindness_min, child.kindness_max)
         else: #Genetic passage
             child.kindness = int(round((self.kindness + other.kindness) / 2.0))
@@ -244,22 +259,27 @@ class NPC(Entity):
 
         child.defense = 10 + (child.courage_max - child.courage) + int(round(child.strength * 0.33))
 
-        if random.random() < 0.1: #Mutation
+        if random.random() < mutation*0.75: #Mutation
             child.memory = random.randint(800, 1200)
         else: #Genetic passage
             child.memory = int(round((self.memory + other.memory) / 2.0))
 
-        if random.random() < 0.1:
+        if random.random() < mutation*0.5:
+            child.speed = round(random.random()*0.6, 2) + 0.4
+        else:
+            child.speed = (self.speed + other.speed) / 2.0
+
+        if random.random() < mutation*0.5:
             child.regen_hitpoint = random.random() * 0.003 + 0.001
         else:
             child.regen_hitpoint = (self.regen_hitpoint + other.regen_hitpoint) / 2.0
 
-        if random.random() < 0.1:
+        if random.random() < mutation*0.5:
             child.harvester = random.random()*0.8 + 0.4
         else:
             child.harvester = (self.harvester + other.harvester) / 2.0
 
-        if random.random() < 0.1:
+        if random.random() < mutation*0.5:
             child.social = random.random()*0.8 + 0.4
         else:
             child.social = (self.social + other.social) / 2.0
@@ -275,16 +295,16 @@ class NPC(Entity):
         child.setIdleBehaviour()
         self.env.addNPC(child)
 
-        child.start()
-
         self.social_xp[other] = min((self.social_xp[other] + 10) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 10) * self.social, 100)
 
-        child.social_xp[self] = 26 * utils.signof(random.random() - 0.2)
-        child.social_xp[other] = 26 * utils.signof(random.random() - 0.2)
+        child.social_xp[self] = 26 * utils.signof(random.random() - 0.5)
+        child.social_xp[other] = 26 * utils.signof(random.random() - 0.5)
 
         self.last_social_interaction = "reproduce with {}".format(other.name)
         other.last_social_interaction = "reproduce with {}".format(self.name)
+
+        child.start()
 
         pc.add_relation_sprite(self, other, "reproduce", basic_colors.LIME)
         pc.add_relation_sprite(other, self, "reproduce", basic_colors.LIME)
@@ -338,6 +358,8 @@ class NPC(Entity):
         for mf in self.known_food.keys():    
             other.known_food[mf] = 0
         #add xp
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = min((self.social_xp[other] + 3) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 5) * self.social, 100)
 
@@ -349,6 +371,8 @@ class NPC(Entity):
         self.last_social_interaction = "befriend {}".format(other.name)
         other.last_social_interaction = "befriended by {}".format(self.name)
 
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = min((self.social_xp[other] + 4) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 4) * self.social, 100)
 
@@ -360,6 +384,8 @@ class NPC(Entity):
         self.last_social_interaction = "talk with {}".format(other.name)
         other.last_social_interaction = "talk with {}".format(self.name)
 
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = min((self.social_xp[other] + 2) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 2) * self.social, 100)
 
@@ -371,6 +397,8 @@ class NPC(Entity):
         self.last_social_interaction = "sbun {}".format(other.name)
         other.last_social_interaction = "snubed by {}".format(self.name)
 
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = min((self.social_xp[other] - 2) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] - 2) * self.social, 100)
 
@@ -383,6 +411,8 @@ class NPC(Entity):
         self.last_social_interaction = "insult {}".format(other.name)
         other.last_social_interaction = "insulted by {}".format(self.name)
 
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = max((self.social_xp[other] - 4) * other.social, -100)
         other.social_xp[self] = max((other.social_xp[self] - 4) * self.social, -100)
 
@@ -391,6 +421,8 @@ class NPC(Entity):
         pc.add_relation_sprite(self, other, "insult", basic_colors.RED)
 
     def attack_other(self, other):
+        if other not in self.social_xp.keys(): self.social_xp[other] = 0
+        if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = min((self.social_xp[other] - 8) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] - 8) * self.social, 100)
 
@@ -505,6 +537,10 @@ class NPC(Entity):
             self.closestfood_computation_thread.closestFood[self] = []
 
     def tick(self):
+        self._tick += 1
+        if self._tick%10000 == 0:
+            self._tick = 0
+
         if self.global_xp >= self.global_xp_next_lvl:
             self.level_up()
 
@@ -522,21 +558,24 @@ class NPC(Entity):
         elif self.hungry():
             self.have_to_eat = True
 
-        if self._tick%100 == 0:
+        if self._tick%80 == 0:
             self.hitpoint = min(self.hitpoint + round(self.hitpoint_max*self.regen_hitpoint, 2), self.hitpoint_max)
 
-        if self._tick%50 == 0:
+        if self._tick%60 == 0:
             self.hunger += round((random.random() * 0.25) + 0.25, 2)
-        if self.hunger >= self.hunger_max \
-            or self.hitpoint <= 0:
+        if self.hunger >= self.hunger_max or self.hitpoint <= 0:
             self.die()
 
-        # if self._tick%200 == 0:
-        #     self.socialInteraction()
+        if self._tick%2000 == 0:
+            self.age += 1
+            if self.age >= 60:
+                # v = self.age - 75
+                p = utils.normalise(self.age, 60, 125)
+                if random.random() < p:
+                    self.die()
+            self.global_xp += int(round(self.global_xp_next_lvl*0.25))
 
-        self._tick += 1
-        if self._tick%1000 == 0:
-            self._tick = 0
+        self.reproduction_cd = max(self.reproduction_cd - 1, 0)
 
     def collectRessource(self, res):
         v = res.getSome(random.randint(15, 25))
@@ -691,10 +730,13 @@ class NPC(Entity):
             self.will_attack = False
             self.attack_target = None
 
-        if self.will_reproduce and self.partner != None:
+        if self.reproduction_cd == 0 and self.age >= 16 and self.age <= 80 and self.will_reproduce and self.partner != None and self.partner not in self.parents:
             self.setReproduceBehaviour(self.partner)
             self.will_reproduce = False
             self.partner = None
+        # else:
+        #     self.will_reproduce = False
+        #     self.partner = None
 
         if self.will_sharefood and self.share_to != None:
             self.setShareFoodBehaviour(self.share_to)
