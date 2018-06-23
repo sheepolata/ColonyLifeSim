@@ -133,7 +133,7 @@ class NPC(Entity):
         #MEMORY and SOCIAL
         self.last_social_interaction = "None"
 
-        self.interaction_range = 90
+        self.interaction_range = 110
 
         self.neighbours = []
         self.neighbours_rect = []
@@ -155,7 +155,10 @@ class NPC(Entity):
         # self.kindness = random.choice([0, 1])
 
         #Attack
-        self.attack_range = 50
+        self.will_attack = False
+        self.attack_target = None
+
+        self.attack_range = 30
 
         self.attack = (self.courage) + 3
         
@@ -347,8 +350,11 @@ class NPC(Entity):
     def socialInteraction(self, other):
         interact = self.getInteractionProbability(other)
 
-        if utils.distance2p(self.getPose(), other.getPose()) < self.attack_range and (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
-            self.attack_other(other)
+        # if utils.distance2p(self.getPose(), other.getPose()) < self.attack_range and (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
+        if (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
+            self.will_attack = True
+            self.attack_target = other
+
         # elif self.isGoodFriend(other):
         #     if random.random() < interact["p_interact_base"]:
         #         self.shareFoodMemory(other)
@@ -389,7 +395,6 @@ class NPC(Entity):
             self.known_food[cf] = 0
 
     def tick(self):
-        self.getAttackProbability()
         if self.global_xp >= self.global_xp_next_lvl:
             self.level_up()
 
@@ -497,6 +502,12 @@ class NPC(Entity):
         self.behaviour = behaviour.CollectFood(self, self.env)
         self.resume()
 
+    def setAttackBehaviour(self, te):
+        self.pause()
+        self.behaviour = behaviour.AttackBehaviour(self, self.env, te)
+        self.behaviour.computePath()
+        self.resume()
+
     def setConsumeFoodBehaviour(self):
         self.pause()
         self.behaviour = behaviour.ConsumeFood(self, self.env)
@@ -550,6 +561,11 @@ class NPC(Entity):
 
                 self.count_check_availaible_food = (self.count_check_availaible_food + 1) % self.count_check_availaible_food_period
 
+        if self.will_attack and self.attack_target != None:
+            self.setAttackBehaviour(self.attack_target)
+            self.will_attack = False
+            self.attack_target = None
+
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
             ns = self.behaviour.nextStep()
@@ -561,7 +577,8 @@ class NPC(Entity):
                         or self.behaviour.label == "COFO"
                         or self.behaviour.label == "EAT"
                         or self.behaviour.label == "SOCINT"
-                        or self.behaviour.label == "EAT") 
+                        or self.behaviour.label == "EAT"
+                        or self.behaviour.label == "ATCK")
                         and ns == 1):
                 self.setDefaultBehaviour()     
             elif self.behaviour.label == "I" and ns == 1:

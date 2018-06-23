@@ -353,6 +353,36 @@ class Harvest(Behaviour):
             # print self.count
             return 0
         
+class AttackBehaviour(GOTOBehaviour):
+    """docstring for AttackBehaviour"""
+    def __init__(self, entity, env, target_entity):
+        super(AttackBehaviour, self).__init__(entity, env, target_entity.getPose())
+        self.target_entity = target_entity
+        
+        self.near_treshold = self.entity.attack_range
+
+        self.state = "attackbehaviour"
+        self.label = "ATCK"
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(AttackBehaviour, self).computePath(_target_rect=self.target_entity.sprite.rect)
+
+    def nextStep(self):
+        x = super(AttackBehaviour, self).nextStep()
+        # if self.entity.name == "entity0" : print self.target_entity.getPose()
+        if x == 1:
+            # print "{} attack {} nextStep : {}".format(self.entity.name, self.target_entity.name ,x)
+            self.entity.attack_other(self.target_entity)
+            return 1
+        else:
+            self.recompute = (self.recompute + 1)%50
+            if self.recompute == 0:
+                self.computePath()
+            return 0
+
+
 class SocialInteraction(Behaviour):
     def __init__(self, entity, env, other):
         super(SocialInteraction, self).__init__(entity, env)

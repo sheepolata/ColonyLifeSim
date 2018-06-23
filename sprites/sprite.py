@@ -93,10 +93,10 @@ class SpriteNPC(SpriteEntityBase):
             elif self.npc.social_xp[n] >= 0 and self.npc.social_xp[n] < 25:
                 pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 0, 25)*5 + 1))
             elif self.npc.social_xp[n] > 25:
-                c = (0, 100*utils.normalise(self.npc.social_xp[n], 25, 100)+155, 0, 128)
+                c = (0, min(100*utils.normalise(self.npc.social_xp[n], 25, 100)+155, 255), 0, 128)
                 pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 25, 100)*5 + 1))
             elif self.npc.social_xp[n] < -25:
-                c = (100*utils.normalise(self.npc.social_xp[n], -25, -100)+155, 0, 0, 128)
+                c = (min(100*utils.normalise(self.npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
                 pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, -100)*5 + 1))
         for vr in self.npc.known_food.keys():
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
