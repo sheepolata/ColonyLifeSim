@@ -23,11 +23,12 @@ clear()
 def add_relation_sprite(e1, e2, label, color):
     append_to("INTERACTION_DISPLAY", {"sprite":sp.relationSprite(e1, e2, label, color), "cooldown":75})
 
-def draw_relation_sprites(screen, paused):
+def draw_relation_sprites(screen, paused, display):
     global profiler_config
     torm = []
     for rsp in profiler_config["INTERACTION_DISPLAY"]:
-        rsp["sprite"].draw(screen)
+        if display:
+            rsp["sprite"].draw(screen)
         if not paused:
             rsp["cooldown"] -= 1
             if rsp["cooldown"] <= 0:

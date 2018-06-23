@@ -44,16 +44,17 @@ class SpriteObstacle(SpriteEntityBase):
 def drawRelations(line_surface, list_npcs):
     for npc in list_npcs:
         for n in npc.neighbours:
-            if npc.social_xp[n] > -25 and npc.social_xp[n] < 0:
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, 0)*5 + 1))
-            elif npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 0, 25)*5 + 1))
-            elif npc.social_xp[n] > 25:
-                c = (0, min(100*utils.normalise(npc.social_xp[n], 25, 100)+155, 255), 0, 128)
-                pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 25, 100)*5 + 1))
-            elif npc.social_xp[n] < -25:
-                c = (min(100*utils.normalise(npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
-                pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, -100)*5 + 1))
+            if n in npc.social_xp.keys():
+                if npc.social_xp[n] > -25 and npc.social_xp[n] < 0:
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, 0)*5 + 1))
+                elif npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 0, 25)*5 + 1))
+                elif npc.social_xp[n] > 25:
+                    c = (0, min(100*utils.normalise(npc.social_xp[n], 25, 100)+155, 255), 0, 128)
+                    pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 25, 100)*5 + 1))
+                elif npc.social_xp[n] < -25:
+                    c = (min(100*utils.normalise(npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
+                    pygame.draw.line(line_surface, c, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, -100)*5 + 1))
 
 class SpriteNPC(SpriteEntityBase):
     def __init__(self, color, pose, npc):
@@ -78,9 +79,11 @@ class SpriteNPC(SpriteEntityBase):
     def drawSelected(self, screen, line_surface, color):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
         
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, self.npc.vision_radius, 1)
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2, self.rect.center, self.npc.attack_range, 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_WHITE  , self.rect.center, self.npc.vision_radius    , 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2  , self.rect.center, self.npc.attack_range     , 1)
         pygame.draw.circle(line_surface, basic_colors.ALPHA_MAGENTA, self.rect.center, self.npc.interaction_range, 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME   , self.rect.center, self.npc.reproduce_range  , 1)
+        pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME_2 , self.rect.center, self.npc.share_range      , 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)
@@ -88,16 +91,17 @@ class SpriteNPC(SpriteEntityBase):
         screen.blit(displ_text, (self.rect.center[0]-self.size*3, int(self.rect.center[1]-self.size*2.5)))
 
         for n in self.npc.neighbours:
-            if self.npc.social_xp[n] > -25 and self.npc.social_xp[n] < 0:
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, 0)*5 + 1))
-            elif self.npc.social_xp[n] >= 0 and self.npc.social_xp[n] < 25:
-                pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 0, 25)*5 + 1))
-            elif self.npc.social_xp[n] > 25:
-                c = (0, min(100*utils.normalise(self.npc.social_xp[n], 25, 100)+155, 255), 0, 128)
-                pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 25, 100)*5 + 1))
-            elif self.npc.social_xp[n] < -25:
-                c = (min(100*utils.normalise(self.npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
-                pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, -100)*5 + 1))
+            if n in self.npc.social_xp.keys():
+                if self.npc.social_xp[n] > -25 and self.npc.social_xp[n] < 0:
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, 0)*5 + 1))
+                elif self.npc.social_xp[n] >= 0 and self.npc.social_xp[n] < 25:
+                    pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 0, 25)*5 + 1))
+                elif self.npc.social_xp[n] > 25:
+                    c = (0, min(100*utils.normalise(self.npc.social_xp[n], 25, 100)+155, 255), 0, 128)
+                    pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], 25, 100)*5 + 1))
+                elif self.npc.social_xp[n] < -25:
+                    c = (min(100*utils.normalise(self.npc.social_xp[n], -25, -100)+155, 255), 0, 0, 128)
+                    pygame.draw.line(line_surface, c, self.rect.center, n.sprite.rect.center, int(utils.normalise(self.npc.social_xp[n], -25, -100)*5 + 1))
         for vr in self.npc.known_food.keys():
             pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, self.rect.center, vr.sprite.rect.center)
 
@@ -126,15 +130,16 @@ class relationSprite(object):
         #Calculate the arrow head coordinates
         # arrowsize = int(utils.distance2p(self.e2.getPose(), self.e1.getPose())*0.1)
         arrowsize = 9
-        L1, L2, angle = math.sqrt((self.e2.getPose()[0] - self.e1.getPose()[0])**2 + (self.e2.getPose()[1] - self.e1.getPose()[1])**2), arrowsize, math.pi/6
-        x1 = self.e2.getPose()[0] + (L2/L1) * ( (self.e1.getPose()[0] - self.e2.getPose()[0])*math.cos(angle) + (self.e1.getPose()[1] - self.e2.getPose()[1])*math.sin(angle))
-        y1 = self.e2.getPose()[1] + (L2/L1) * ( (self.e1.getPose()[1] - self.e2.getPose()[1])*math.cos(angle) - (self.e1.getPose()[0] - self.e2.getPose()[0])*math.sin(angle))
+        if self.e1.getPose() != self.e2.getPose():
+            L1, L2, angle = math.sqrt((self.e2.getPose()[0] - self.e1.getPose()[0])**2 + (self.e2.getPose()[1] - self.e1.getPose()[1])**2), arrowsize, math.pi/6
+            x1 = self.e2.getPose()[0] + (L2/L1) * ( (self.e1.getPose()[0] - self.e2.getPose()[0])*math.cos(angle) + (self.e1.getPose()[1] - self.e2.getPose()[1])*math.sin(angle))
+            y1 = self.e2.getPose()[1] + (L2/L1) * ( (self.e1.getPose()[1] - self.e2.getPose()[1])*math.cos(angle) - (self.e1.getPose()[0] - self.e2.getPose()[0])*math.sin(angle))
 
-        x2 = self.e2.getPose()[0] + (L2/L1) * ( (self.e1.getPose()[0] - self.e2.getPose()[0])*math.cos(angle) - (self.e1.getPose()[1] - self.e2.getPose()[1])*math.sin(angle))
-        y2 = self.e2.getPose()[1] + (L2/L1) * ( (self.e1.getPose()[1] - self.e2.getPose()[1])*math.cos(angle) + (self.e1.getPose()[0] - self.e2.getPose()[0])*math.sin(angle))
+            x2 = self.e2.getPose()[0] + (L2/L1) * ( (self.e1.getPose()[0] - self.e2.getPose()[0])*math.cos(angle) - (self.e1.getPose()[1] - self.e2.getPose()[1])*math.sin(angle))
+            y2 = self.e2.getPose()[1] + (L2/L1) * ( (self.e1.getPose()[1] - self.e2.getPose()[1])*math.cos(angle) + (self.e1.getPose()[0] - self.e2.getPose()[0])*math.sin(angle))
 
-        #Draw the arrow head
-        pygame.draw.polygon(screen, self.color, ((self.e2.getPose()[0], self.e2.getPose()[1]), (x1, y1), (x2, y2)), 0)
+            #Draw the arrow head
+            pygame.draw.polygon(screen, self.color, ((self.e2.getPose()[0], self.e2.getPose()[1]), (x1, y1), (x2, y2)), 0)
 
         rect_label = self.font.render(self.label, False, basic_colors.BLACK)
         # w, h = r.center[0] - rect_label.get_rect().width/2, r.center[1] - rect_label.get_rect().height/2
