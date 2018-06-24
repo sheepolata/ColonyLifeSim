@@ -209,7 +209,7 @@ def draw_button(surface, fill_color, outline_color, rect, border=1):
     surface.fill(outline_color, rect)
     surface.fill(fill_color, rect.inflate(-border*2, -border*2))   
 
-def main(nb_npc=20, nb_obs=10, nb_spawner=4, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
+def main(nb_npc=20, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0):
 
     tinit = time.time()
     pygame.init()
@@ -849,19 +849,21 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=4, _profiler=-1, DISPLAY=True, debug_d
                 for e in selected_npc[shift_list_ent_inf:shift_list_ent_sup]:
                     txt_basic     = "{} | {}/{} HP (regen {}%) | {}/{} XP".format(e.name, e.hitpoint, e.hitpoint_max, round(e.regen_hitpoint*100, 2), e.global_xp, e.global_xp_next_lvl)
                     txt_basic2    = "{} years old | level {} | Gen {} | Parents : {} & {}".format(e.age, e.level, e.generation, e.parents[0].name if e.parents[0] != None else "None", e.parents[1].name if e.parents[1] != None else "None")
-                    txt_stat1     = "  - speed : {}  memory : {}".format(str(e.speed), str(e.memory))
-                    txt_hunger    = "  - hunger : {}/{} - Kin : {} Cou : {} Str : {}".format(e.hunger, e.hunger_max, e.kindness, e.courage, e.strength)
-                    txt_stat2     = "  - Atck : +{} ({}d{}+{}) | Def : {}".format(e.attack, e.attack_dice[0], e.attack_dice[1], e.attack_damage, e.defense)
-                    txt_behaviour = "  - state : {}".format((e.behaviour.label if e.behaviour != None else "none"))
-                    txt_social    = "  - Last soc. int. : {}".format(e.last_social_interaction)
+                    txt_stat1     = "  - speed: {}  memory: {}".format(str(e.speed), str(e.memory))
+                    txt_hunger    = "  - hunger: {}/{} - Kin: {} Cou: {} Str: {}".format(e.hunger, e.hunger_max, e.kindness, e.courage, e.strength)
+                    txt_stat2     = "  - Harvester: {} | Social: {}".format(round(e.harvester, 2), round(e.social, 2))
+                    txt_stat3     = "  - Atck: +{} ({}d{}+{}) | Def: {}".format(e.attack, e.attack_dice[0], e.attack_dice[1], e.attack_damage, e.defense) 
+                    txt_behaviour = "  - state: {} | LSI: {}".format((e.behaviour.label if e.behaviour != None else "none"), e.last_social_interaction["label"] if e.last_social_interaction != None else "None")
+                    # txt_social    = "  - Last soc. int.: {}".format(e.last_social_interaction)
                     
                     displ_txt_basic = font.render(txt_basic, True, basic_colors.BLACK)
                     displ_txt_basic2 = font.render(txt_basic2, True, basic_colors.BLACK)
                     displ_txt_stat1 = font.render(txt_stat1, True, basic_colors.BLACK)
                     displ_txt_hunger = font.render(txt_hunger, True, basic_colors.BLACK)
                     displ_txt_stat2 = font.render(txt_stat2, True, basic_colors.BLACK)
+                    displ_txt_stat3 = font.render(txt_stat3, True, basic_colors.BLACK)
                     displ_txt_behaviour = font.render(txt_behaviour, True, basic_colors.BLACK)
-                    displ_txt_social = font.render(txt_social, True, basic_colors.BLACK)
+                    # displ_txt_social = font.render(txt_social, True, basic_colors.BLACK)
 
                     info_surface.blit(displ_txt_basic, (10, shift + fontsize + 2))
                     shift = shift + fontsize + 2
@@ -873,10 +875,12 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=4, _profiler=-1, DISPLAY=True, debug_d
                     shift = shift + fontsize
                     info_surface.blit(displ_txt_stat2, (10, shift + fontsize))
                     shift = shift + fontsize
+                    info_surface.blit(displ_txt_stat3, (10, shift + fontsize))
+                    shift = shift + fontsize
                     info_surface.blit(displ_txt_behaviour, (10, shift + fontsize))
                     shift = shift + fontsize
-                    info_surface.blit(displ_txt_social, (10, shift + fontsize))
-                    shift = shift + fontsize
+                    # info_surface.blit(displ_txt_social, (10, shift + fontsize))
+                    # shift = shift + fontsize
 
                     for k in e.bagpack:
                         txt_bagpack = "          " + k + " : " + str(round(e.bagpack[k], 2))

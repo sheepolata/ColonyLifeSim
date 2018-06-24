@@ -450,9 +450,9 @@ class SocialInteraction(Behaviour):
         self.state = "socialinteraction"
         self.label = "SOCINT"
 
-        self.time_taken = 150
+        self.time_taken = 125
 
-        self.cooldown = 300
+        self.cooldown = 200
 
     def computePath(self):
         return 1

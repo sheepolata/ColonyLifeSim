@@ -118,12 +118,11 @@ class NPC(Entity):
         self.hunger_max = self.hunger_thresh + 30
         self.have_to_eat = False
 
-        self.speed = round(random.random()*0.6, 2) + 0.4
-        self.harvester = random.random()*0.8 + 0.4
-        self.social = random.random()*0.8 + 0.4
+        self.speed = round(random.random()*0.4, 2) + 0.6
+        self.harvester = random.random()*0.4 + 0.8
+        self.social = random.random()*0.4 + 0.8
 
         self.vision_radius = 150
-
 
         self.level = 0
         self.global_xp = 0
@@ -137,8 +136,9 @@ class NPC(Entity):
         self.will_reproduce = False
         self.partner = None
         self.reproduction_cd = 0
+        self.nb_children = 0
 
-        self.last_social_interaction = "None"
+        self.last_social_interaction = None
 
         self.reproduce_range = 15
         self.interaction_range = 110
@@ -183,7 +183,7 @@ class NPC(Entity):
         self.attack_dice = [1, 4]
 
         #Defense
-        self.hitpoint_max = 20
+        self.hitpoint_max = 50
         self.hitpoint = self.hitpoint_max
 
         self.regen_hitpoint = random.random() * 0.003 + 0.001
@@ -225,6 +225,9 @@ class NPC(Entity):
         #update values
         self.attack_damage = int(round(self.strength * 1.2))
         self.defense = 10 + (self.courage_max - self.courage) + int(round(self.strength * 0.33))
+
+    def setLastSocialInteraction(self, other, label):
+        self.last_social_interaction = {"label":label, "other":other}
 
     def giveBirth(self, other):
         self.reproduction_cd = 1800
@@ -298,11 +301,14 @@ class NPC(Entity):
         self.social_xp[other] = min((self.social_xp[other] + 10) * other.social, 100)
         other.social_xp[self] = min((other.social_xp[self] + 10) * self.social, 100)
 
+        self.social_xp[child] = 30
+        other.social_xp[child] = 30
+
         child.social_xp[self] = 26 * utils.signof(random.random() - 0.5)
         child.social_xp[other] = 26 * utils.signof(random.random() - 0.5)
-
-        self.last_social_interaction = "reproduce with {}".format(other.name)
-        other.last_social_interaction = "reproduce with {}".format(self.name)
+        
+        self.setLastSocialInteraction(other, "reproduce with {}".format(other.name))
+        other.setLastSocialInteraction(self, "reproduce with {}".format(self.name))
 
         child.start()
 
@@ -323,7 +329,7 @@ class NPC(Entity):
 
         vcurr = self.kindness + self.hitpoint
 
-        return utils.normalise(vcurr, vmin, vmax)
+        return utils.normalise(vcurr, vmin, vmax) - (0.05*self.nb_children)
         
     def setInitialSocialXP(self):
         for npc in self.env.npcs:
@@ -333,28 +339,31 @@ class NPC(Entity):
         if other in self.social_xp.keys():
             diff_kind = float(abs(self.kindness - other.kindness) + 1)
 
+            xp_proportion = 200.0
+
             if self.isGoodFriend(other):
                 nature = "good"
-                proba = ((1 / diff_kind) + (float(self.social_xp[other]) / (400.0))) * 1.2
+                proba = ((1 / diff_kind) + (float(self.social_xp[other]) / (xp_proportion))) * 1.2
             elif self.isFriend(other):
                 nature = "good"
-                proba = (1 / diff_kind) + (float(self.social_xp[other]) / (400.0))
+                proba = (1 / diff_kind) + (float(self.social_xp[other]) / (xp_proportion))
             elif self.isEnnemy(other):
                 nature = "bad"
-                proba = (1 - ((1 / diff_kind)) - (float(self.social_xp[other]) / (400.0)))
+                proba = (1 - ((1 / diff_kind)) - (float(self.social_xp[other]) / (xp_proportion)))
             elif self.isSwornEnnemy(other):
                 nature = "bad"
-                proba = ((1 - (1 / diff_kind)) - (float(self.social_xp[other]) / (400.0))) * 1.2
+                proba = ((1 - (1 / diff_kind)) - (float(self.social_xp[other]) / (xp_proportion))) * 1.2
             else:
                 nature = "neutral"
-                proba = 0.5 + (float(self.social_xp[other]) / (400.0))
+                proba = 0.5 + (float(self.social_xp[other]) / (xp_proportion))
 
             return {"p_interact_base": proba, "nature": nature}
         return {"p_interact_base": 0.5, "nature": "neutral"}
 
     def shareFoodMemory(self, other):
-        self.last_social_interaction = "share food with {}".format(other.name)
-        other.last_social_interaction = "food shared by {}".format(self.name)
+        self.setLastSocialInteraction(other, "share food with {}".format(other.name))
+        other.setLastSocialInteraction(self, "food shared by {}".format(self.name))
+
         for mf in self.known_food.keys():    
             other.known_food[mf] = 0
         #add xp
@@ -368,8 +377,8 @@ class NPC(Entity):
         pc.add_relation_sprite(self, other, "share food", basic_colors.LIME)
 
     def befriend(self, other):
-        self.last_social_interaction = "befriend {}".format(other.name)
-        other.last_social_interaction = "befriended by {}".format(self.name)
+        self.setLastSocialInteraction(other, "befriend {}".format(other.name))
+        other.setLastSocialInteraction(self, "befriended by {}".format(self.name))
 
         if other not in self.social_xp.keys(): self.social_xp[other] = 0
         if self not in other.social_xp.keys(): other.social_xp[self] = 0
@@ -381,8 +390,8 @@ class NPC(Entity):
         pc.add_relation_sprite(self, other, "befriend", basic_colors.LIME)
 
     def talk(self, other):
-        self.last_social_interaction = "talk with {}".format(other.name)
-        other.last_social_interaction = "talk with {}".format(self.name)
+        self.setLastSocialInteraction(other, "talk with {}".format(other.name))
+        other.setLastSocialInteraction(self, "talk with {}".format(self.name))
 
         if other not in self.social_xp.keys(): self.social_xp[other] = 0
         if self not in other.social_xp.keys(): other.social_xp[self] = 0
@@ -394,23 +403,23 @@ class NPC(Entity):
         pc.add_relation_sprite(self, other, "talk", basic_colors.LIME)
 
     def snub(self, other):
-        self.last_social_interaction = "sbun {}".format(other.name)
-        other.last_social_interaction = "snubed by {}".format(self.name)
+        self.setLastSocialInteraction(other, "sbun {}".format(other.name))
+        other.setLastSocialInteraction(self, "snubed by {}".format(self.name))
 
         if other not in self.social_xp.keys(): self.social_xp[other] = 0
         if self not in other.social_xp.keys(): other.social_xp[self] = 0
-        self.social_xp[other] = min((self.social_xp[other] - 2) * other.social, 100)
-        other.social_xp[self] = min((other.social_xp[self] - 2) * self.social, 100)
+        self.social_xp[other] = max((self.social_xp[other] - 2) * other.social, -100)
+        other.social_xp[self] = max((other.social_xp[self] - 2) * self.social, -100)
 
         self.global_xp += 1
 
         pc.add_relation_sprite(self, other, "snub", basic_colors.RED)
     
     def insult(self, other):
-        #Change xp
-        self.last_social_interaction = "insult {}".format(other.name)
-        other.last_social_interaction = "insulted by {}".format(self.name)
+        self.setLastSocialInteraction(other, "insult {}".format(other.name))
+        other.setLastSocialInteraction(self, "insulted by {}".format(self.name))
 
+        #Change xp
         if other not in self.social_xp.keys(): self.social_xp[other] = 0
         if self not in other.social_xp.keys(): other.social_xp[self] = 0
         self.social_xp[other] = max((self.social_xp[other] - 4) * other.social, -100)
@@ -423,8 +432,8 @@ class NPC(Entity):
     def attack_other(self, other):
         if other not in self.social_xp.keys(): self.social_xp[other] = 0
         if self not in other.social_xp.keys(): other.social_xp[self] = 0
-        self.social_xp[other] = min((self.social_xp[other] - 8) * other.social, 100)
-        other.social_xp[self] = min((other.social_xp[self] - 8) * self.social, 100)
+        self.social_xp[other] = max((self.social_xp[other] - 8) * other.social, -100)
+        other.social_xp[self] = max((other.social_xp[self] - 8) * self.social, -100)
 
         atck_value = random.randint(1, 20) + self.attack
         if atck_value >= other.defense:
@@ -436,14 +445,14 @@ class NPC(Entity):
 
             self.global_xp += 8
 
-            self.last_social_interaction = "attack {} for {} dmg! ".format(other.name, damage_value)
-            other.last_social_interaction = "attacked by {}, took {} dmg!".format(self.name, damage_value)
+            self.setLastSocialInteraction(other, "attack {} for {} dmg! ".format(other.name, damage_value))
+            other.setLastSocialInteraction(self, "attacked by {}, took {} dmg!".format(self.name, damage_value))
 
             pc.add_relation_sprite(self, other, "attack succeeds", basic_colors.RED)
 
         else:
-            self.last_social_interaction = "attack {}: failed! ".format(other.name)
-            other.last_social_interaction = "attacked by {}, defended!".format(self.name)
+            self.setLastSocialInteraction(other, "attack {}: failed! ".format(other.name))
+            other.setLastSocialInteraction(self, "attacked by {}, defended!".format(self.name))
 
             other.global_xp += 10
 
@@ -463,22 +472,22 @@ class NPC(Entity):
     def isFriend(self, other):
         if other not in self.social_xp.keys():
             return False
-        return float(abs(self.kindness - other.kindness)) <= 4 or self.social_xp[other] >= 50
+        return float(abs(self.kindness - other.kindness)) < 4 or self.social_xp[other] >= 50
 
     def isGoodFriend(self, other):
         if other not in self.social_xp.keys():
             return False
-        return self.social_xp[other] >= 75
+        return float(abs(self.kindness - other.kindness)) < 2 or self.social_xp[other] >= 75
 
     def isEnnemy(self, other):
         if other not in self.social_xp.keys():
             return False
-        return float(abs(self.kindness - other.kindness)) >= 6 or self.social_xp[other] <= -50
+        return float(abs(self.kindness - other.kindness)) > 6 or self.social_xp[other] <= -50
 
     def isSwornEnnemy(self, other):
         if other not in self.social_xp.keys():
             return False
-        return self.social_xp[other] <= -75
+        return float(abs(self.kindness - other.kindness)) > 8 or self.social_xp[other] <= -75
 
     def computeNeighbours(self):
         try:
@@ -491,10 +500,10 @@ class NPC(Entity):
         other_interact = other.getInteractionProbability(self)
 
         # if utils.distance2p(self.getPose(), other.getPose()) < self.attack_range and (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
-        if  (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability()*interact["p_interact_base"]:
+        if  (interact["nature"] == "bad" and self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability()*interact["p_interact_base"]:
             self.will_attack = True
             self.attack_target = other
-        elif ((interact["nature"] == "good" or self.isGoodFriend(other)) 
+        elif ((interact["nature"] == "good" and self.isGoodFriend(other)) 
                 and random.random() <= self.getReproduceProbability()*interact["p_interact_base"]
                 and random.random() <= other.getReproduceProbability()*other_interact["p_interact_base"] ):
             self.will_reproduce = True
@@ -511,9 +520,9 @@ class NPC(Entity):
                 self.talk(other)
         elif interact["nature"] == "neutral":
             if random.random() < interact["p_interact_base"]:
-                self.snub(other)
-            else:
                 self.talk(other)
+            else:
+                self.snub(other)
         elif interact["nature"] == "bad":
             if random.random() < interact["p_interact_base"]:
                 self.insult(other)
