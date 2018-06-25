@@ -28,6 +28,12 @@ def normalise(a, mini, maxi):
 def closeEnough(a, b, _thresh=10):
     return abs(a-b) <= _thresh
 
+def signof(a):
+    if a >= 0:
+        return 1
+    else:
+        return -1
+
 def near(a, target, _thresh=10):
     return (a[0] > (target[0] - _thresh) and a[0] < (target[0] + _thresh)) and (a[1] > (target[1] - _thresh) and a[1] <(target[1] + _thresh))
 

@@ -28,6 +28,7 @@ class Environment(object):
         self.ressources = {}
 
         self.npcs = []
+        self.idNPC = 0
         self.spawners = []
 
         self.min_tile_w = int(self.width*0.1)
@@ -47,9 +48,11 @@ class Environment(object):
 
     def setNPCs(self, npcs):
         self.npcs = npcs
+        self.idNPC = len(self.npcs)
 
     def addNPC(self, npc):
         self.npcs.append(npc)
+        self.idNPC += 1
 
     def rmNPC(self, npc):
         if npc in self.npcs:

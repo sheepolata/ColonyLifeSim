@@ -353,6 +353,95 @@ class Harvest(Behaviour):
             # print self.count
             return 0
         
+class ShareFoodBehaviour(GOTOBehaviour):
+    def __init__(self, entity, env, shareto):
+        super(ShareFoodBehaviour, self).__init__(entity, env, shareto.getPose())
+        self.shareto = shareto
+
+        self.near_treshold = self.entity.attack_range
+
+        self.state = "sharefood"
+        self.label = "SHAFO"
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(ShareFoodBehaviour, self).computePath(_target_rect=self.shareto.sprite.rect)
+        
+    def nextStep(self):
+        x = super(ShareFoodBehaviour, self).nextStep()
+        # if self.entity.name == "entity0" : print self.target_entity.getPose()
+        if x == 1:
+            # print "{} attack {} nextStep : {}".format(self.entity.name, self.target_entity.name ,x)
+            if utils.distance2p(self.entity.getPose(), self.shareto.getPose()) < self.entity.share_range*1.1:
+                self.entity.shareFoodMemory(self.shareto)
+            return 1
+        else:
+            self.recompute = (self.recompute + 1)%50
+            if self.recompute == 0:
+                self.computePath()
+            return 0
+
+class AttackBehaviour(GOTOBehaviour):
+    """docstring for AttackBehaviour"""
+    def __init__(self, entity, env, target_entity):
+        super(AttackBehaviour, self).__init__(entity, env, target_entity.getPose())
+        self.target_entity = target_entity
+        
+        self.near_treshold = self.entity.attack_range
+
+        self.state = "attackbehaviour"
+        self.label = "ATCK"
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(AttackBehaviour, self).computePath(_target_rect=self.target_entity.sprite.rect)
+
+    def nextStep(self):
+        x = super(AttackBehaviour, self).nextStep()
+        # if self.entity.name == "entity0" : print self.target_entity.getPose()
+        if x == 1:
+            # print "{} attack {} nextStep : {}".format(self.entity.name, self.target_entity.name ,x)
+            if utils.distance2p(self.entity.getPose(), self.target_entity.getPose()) < self.entity.attack_range*1.1:
+                self.entity.attack_other(self.target_entity)
+            return 1
+        else:
+            self.recompute = (self.recompute + 1)%50
+            if self.recompute == 0:
+                self.computePath()
+            return 0
+
+class ReproduceBehaviour(GOTOBehaviour):
+    def __init__(self, entity, env, other_parent):
+        super(ReproduceBehaviour, self).__init__(entity, env, other_parent.getPose())
+        self.other_parent = other_parent
+
+        self.near_treshold = self.entity.reproduce_range
+
+        self.state = "reproducebehaviour"
+        self.label = "BREED"
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(ReproduceBehaviour, self).computePath(_target_rect=self.other_parent.sprite.rect)
+
+    def nextStep(self):
+        x = super(ReproduceBehaviour, self).nextStep()
+        # if self.entity.name == "entity0" : print self.target_entity.getPose()
+        if x == 1:
+            # print "{} attack {} nextStep : {}".format(self.entity.name, self.target_entity.name ,x)
+            if utils.distance2p(self.entity.getPose(), self.other_parent.getPose()) < self.entity.reproduce_range*1.1:
+                self.entity.giveBirth(self.other_parent)
+            return 1
+        else:
+            self.recompute = (self.recompute + 1)%50
+            if self.recompute == 0:
+                self.computePath()
+            return 0
+        
+
 class SocialInteraction(Behaviour):
     def __init__(self, entity, env, other):
         super(SocialInteraction, self).__init__(entity, env)
@@ -361,9 +450,9 @@ class SocialInteraction(Behaviour):
         self.state = "socialinteraction"
         self.label = "SOCINT"
 
-        self.time_taken = 150
+        self.time_taken = 125
 
-        self.cooldown = 300
+        self.cooldown = 200
 
     def computePath(self):
         return 1
