@@ -391,10 +391,10 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_d
         
         l_spawner = []
         for i in range(nb_spawner):
-            spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 6, random.randint(620, 780), random.random()*0.4 + 0.8, False)
+            spawnerFood = entities.Spawner(env, "spawner"+str(i), "foodspawner", 4, random.randint(620, 780), random.random()*0.4 + 0.8, True)
             spawnerFood.setRandomPose(main_surface_width, main_surface_height)
             spawnerFood.setSpawnerBehaviour()
-            for i in range(1):
+            for i in range(4):
                 spawnerFood.spawn(start_thread=False)
             l_spawner.append(spawnerFood)
 
@@ -786,11 +786,14 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_d
                         r.resume()
                 for e in env.npcs:
                     e.pause()
-                    e.sprite.draw(screen, DISPLAY_NAME)
-                    if e in selected_npc:
-                        e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
-                    if e.dead:
-                        e.sprite.drawDead(screen)
+                    try:
+                        e.sprite.draw(screen, DISPLAY_NAME)
+                        if e in selected_npc:
+                            e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
+                        if e.dead:
+                            e.sprite.drawDead(screen)
+                    except TypeError as e:
+                        print("SUPER WEIRD display error({0}): {1}".format(e.errno, e.strerror))
                     e.resume()
                 
                 pc.draw_relation_sprites(screen, paused, DISPLAY_INTERACTION)

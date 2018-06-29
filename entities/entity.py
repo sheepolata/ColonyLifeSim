@@ -360,6 +360,24 @@ class NPC(Entity):
             return {"p_interact_base": proba, "nature": nature}
         return {"p_interact_base": 0.5, "nature": "neutral"}
 
+    def shareFood(self, other):
+        if "food" in self.bagpack.keys() and self.bagpack["food"] > self.hunger_thresh*0.15:
+            v = self.bagpack["food"] / 2.0
+            self.bagpack["food"] -= v 
+            other.putInBagpack("food", v)
+
+            self.setLastSocialInteraction(other, "share {} food with {}".format(v, other.name))
+            other.setLastSocialInteraction(self, "{} food shared by {}".format(v, self.name))
+
+            if other not in self.social_xp.keys(): self.social_xp[other] = 0
+            if self not in other.social_xp.keys(): other.social_xp[self] = 0
+            self.social_xp[other] = min((self.social_xp[other] + 3) * other.social, 100)
+            other.social_xp[self] = min((other.social_xp[self] + 5) * self.social, 100)
+
+            self.global_xp += 5
+
+            pc.add_relation_sprite(self, other, "share food", basic_colors.LIME)
+
     def shareFoodMemory(self, other):
         self.setLastSocialInteraction(other, "share food with {}".format(other.name))
         other.setLastSocialInteraction(self, "food shared by {}".format(self.name))
@@ -550,10 +568,20 @@ class NPC(Entity):
         if self._tick%10000 == 0:
             self._tick = 0
 
+        if self._tick%500 == 0:
+            current_rect = self.env.getCurrentRect(self.getPose())
+            while current_rect == None:
+                self.setPose(self.getPose()[0] + random.randint(-4, 4), self.getPose()[1]+ random.randint(-4, 4))
+                current_rect = self.env.getCurrentRect(self.getPose())
+
         if self.global_xp >= self.global_xp_next_lvl:
             self.level_up()
 
         self.social_cooldown = max(self.social_cooldown - 1, 0)
+
+        torm_food = [x for x in self.known_food.keys() if x not in self.env.ressources["food"]]
+        for tormf in torm_food:
+            del self.known_food[tormf]
 
         self.updateFoodMemory() 
         if self._tick%10 == 0:
@@ -591,9 +619,14 @@ class NPC(Entity):
         return v 
 
     def putInBagpack(self, res, qtt):
-        if not res.name in self.bagpack.keys():
-            self.bagpack[res.name] = 0
-        self.bagpack[res.name] = round(qtt * self.harvester, 2)
+        if not isinstance(res, basestring):
+            if not res.name in self.bagpack.keys():
+                self.bagpack[res.name] = 0
+            self.bagpack[res.name] += round(qtt, 2)
+        else:
+            if not res in self.bagpack.keys():
+                self.bagpack[res] = 0
+            self.bagpack[res] += round(qtt, 2)
 
     def haveFood(self):
         return "food" in self.bagpack.keys() and self.bagpack["food"] > 0
@@ -693,7 +726,12 @@ class NPC(Entity):
         self.resume()
 
     def setDefaultBehaviour(self):
-        if self.social_cooldown <= 0 and self.neighbours:
+        if (self.known_food 
+            and [x for x in self.known_food if x.harvestable]
+            and "food" not in self.bagpack.keys() 
+            or ("food" in self.bagpack.keys() and self.bagpack["food"] <= self.hunger_thresh*0.40)):
+                self.setCollectFoodBehaviour()
+        elif self.social_cooldown <= 0 and self.neighbours:
             l = [x for x in self.neighbours if utils.distance2p(self.getPose(), x.getPose()) < self.interaction_range]
             if l:
                 other = random.choice(l)

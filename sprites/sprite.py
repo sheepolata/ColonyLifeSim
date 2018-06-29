@@ -63,8 +63,7 @@ class SpriteNPC(SpriteEntityBase):
 
     def draw(self, screen, info):
         super(SpriteNPC, self).draw(screen)
-
-
+        
         if info:
             text = self.npc.name
             font = pygame.font.SysFont('Sans', 10)

@@ -167,7 +167,9 @@ class GOTOBehaviour(Behaviour):
         return super(GOTOBehaviour, self).computePath(self.specific_target, _target_rect=_target_rect)
 
     def nextStep(self):
-        self.count = (self.count+1) % 150
+        self.count = (self.count+1) % 360
+        if self.count == 0:
+            self.computePath()
         return super(GOTOBehaviour, self).nextStep()
 
 class GOTORessource(GOTOBehaviour):
@@ -204,7 +206,7 @@ class CollectFood(Behaviour):
         pass    
 
     def nextStep(self):
-        self.count_recomp_path = (self.count_recomp_path+1)%360
+        self.count_recomp_path = (self.count_recomp_path+1)%180
 
         changed = False
         _target_rect = None
@@ -217,8 +219,8 @@ class CollectFood(Behaviour):
                 return 1
             self.gotobehaviour = GOTORessource(self.entity, self.env, self.entity.target_res)
             self.state = "collectfood:GTR"
-        elif self.count_recomp_path == -1:
-            old_tr, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), "food", approx=False)
+        elif self.count_recomp_path == 0:
+            old_tr, _target_rect = self.env.getClosestRessourceFromList(self.entity.getPose(), self.entity.known_food.keys())
             
             if self.entity.target_res != None and old_tr != None and self.entity.target_res != old_tr:
                 changed = True
@@ -345,7 +347,7 @@ class Harvest(Behaviour):
             return 0
         elif self.count <= 0:
             # print "harvest over"
-            self.entity.putInBagpack(self.res, self.qtt)
+            self.entity.putInBagpack(self.res, self.qtt*self.entity.harvester)
             self.count = -1
             return 1
         else:
@@ -358,7 +360,7 @@ class ShareFoodBehaviour(GOTOBehaviour):
         super(ShareFoodBehaviour, self).__init__(entity, env, shareto.getPose())
         self.shareto = shareto
 
-        self.near_treshold = self.entity.attack_range
+        self.near_treshold = self.entity.reproduce_range
 
         self.state = "sharefood"
         self.label = "SHAFO"
@@ -374,7 +376,8 @@ class ShareFoodBehaviour(GOTOBehaviour):
         if x == 1:
             # print "{} attack {} nextStep : {}".format(self.entity.name, self.target_entity.name ,x)
             if utils.distance2p(self.entity.getPose(), self.shareto.getPose()) < self.entity.share_range*1.1:
-                self.entity.shareFoodMemory(self.shareto)
+                # self.entity.shareFoodMemory(self.shareto)
+                self.entity.shareFood(self.shareto)
             return 1
         else:
             self.recompute = (self.recompute + 1)%50
