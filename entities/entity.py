@@ -518,7 +518,8 @@ class NPC(Entity):
         other_interact = other.getInteractionProbability(self)
 
         # if utils.distance2p(self.getPose(), other.getPose()) < self.attack_range and (interact["nature"] == "bad" or self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability():
-        if  (interact["nature"] == "bad" and self.isSwornEnnemy(other)) and random.random() <= self.getAttackProbability()*interact["p_interact_base"]:
+        if  ((interact["nature"] == "bad" and self.isSwornEnnemy(other)) 
+                and random.random() <= self.getAttackProbability()*interact["p_interact_base"]):
             self.will_attack = True
             self.attack_target = other
         elif ((interact["nature"] == "good" and self.isGoodFriend(other)) 

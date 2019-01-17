@@ -444,6 +444,22 @@ class ReproduceBehaviour(GOTOBehaviour):
                 self.computePath()
             return 0
         
+class SearchFoodBehaviour(GOTOBehaviour):
+    def __init__(self, entity, env, goal):
+        super(SearchFoodBehaviour, self).__init__(entity, env, goal.getPose())
+        self.state = "searchfoodbehaviour"
+        self.label = "SCHFOOD"
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(SearchFoodBehaviour, self).computePath(_target_rect=self.goal.sprite.rect)
+
+    def nextStep(self):
+        super(SearchFoodBehaviour, self).nextStep()
+        
+        pass
+                    
 
 class SocialInteraction(Behaviour):
     def __init__(self, entity, env, other):

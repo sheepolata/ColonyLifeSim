@@ -106,13 +106,13 @@ Run the following, in the project's root directory:
 
 ```sh
 pipenv shell
-python main.py
+python colonylife.py
 ```
 
 #### Classic
 
 Simply run
-`python main.py`
+`python colonylife.py`
 in the project's root directory
 
 
@@ -123,7 +123,7 @@ Locate the Python2.7 installation directory (usually in C:/Python27).
 To run python, open the command prompt and run :
 
 ```sh
-PYTHON_INSTALL_DIR\PATH\python.exe COLONY_DIR_PATH\main.py
+PYTHON_INSTALL_DIR\PATH\python.exe COLONY_DIR_PATH\colonylife.py
 ```
 
 You may also use Python IDE, IDLE, to run the project, but as I don't use it, I can't advice you on how to use it.
