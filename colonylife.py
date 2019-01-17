@@ -792,8 +792,9 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_d
                             e.sprite.drawSelected(screen, alpha_surface, basic_colors.RED)
                         if e.dead:
                             e.sprite.drawDead(screen)
-                    except TypeError as e:
-                        print("SUPER WEIRD display error({0}): {1}".format(e.errno, e.strerror))
+                    except TypeError as err:
+                        # print("SUPER WEIRD display error({0}): {1}".format(e.errno, e.strerror))
+                        print("SUPER WEIRD display error: {0}".format(err))
                     e.resume()
                 
                 pc.draw_relation_sprites(screen, paused, DISPLAY_INTERACTION)
@@ -1027,7 +1028,7 @@ def main(nb_npc=20, nb_obs=10, nb_spawner=6, _profiler=-1, DISPLAY=True, debug_d
 
 
 if __name__ == '__main__':
-    main(_profiler=-1, DISPLAY=True, debug_displ=False)
+    main(nb_npc=22, nb_obs=8, nb_spawner=8, _profiler=-1, DISPLAY=True, debug_displ=False, number=0, max_number=0)
     # init = InitialisationScreen()
     # init.start()
 

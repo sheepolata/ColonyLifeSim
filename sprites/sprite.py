@@ -41,13 +41,13 @@ class SpriteObstacle(SpriteEntityBase):
 
         pygame.draw.rect(screen, self.color, self.rect)
 
-def drawRelations(line_surface, list_npcs):
+def drawRelations(line_surface, list_npcs, _all=False):
     for npc in list_npcs:
         for n in npc.neighbours:
             if n in npc.social_xp.keys():
-                if npc.social_xp[n] > -25 and npc.social_xp[n] < 0:
+                if _all and npc.social_xp[n] > -25 and npc.social_xp[n] < 0:
                     pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], -25, 0)*5 + 1))
-                elif npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
+                elif _all and npc.social_xp[n] >= 0 and npc.social_xp[n] < 25:
                     pygame.draw.line(line_surface, basic_colors.ALPHA_WHITE, npc.sprite.rect.center, n.sprite.rect.center, int(utils.normalise(npc.social_xp[n], 0, 25)*5 + 1))
                 elif npc.social_xp[n] > 25:
                     c = (0, min(100*utils.normalise(npc.social_xp[n], 25, 100)+155, 255), 0, 128)
@@ -79,10 +79,10 @@ class SpriteNPC(SpriteEntityBase):
         pygame.draw.circle(screen, color, self.rect.center, self.size, 1)
         
         pygame.draw.circle(line_surface, basic_colors.ALPHA_WHITE  , self.rect.center, self.npc.vision_radius    , 1)
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2  , self.rect.center, self.npc.attack_range     , 1)
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_MAGENTA, self.rect.center, self.npc.interaction_range, 1)
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME   , self.rect.center, self.npc.reproduce_range  , 1)
-        pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME_2 , self.rect.center, self.npc.share_range      , 1)
+        # pygame.draw.circle(line_surface, basic_colors.ALPHA_RED_2  , self.rect.center, self.npc.attack_range     , 1)
+        # pygame.draw.circle(line_surface, basic_colors.ALPHA_MAGENTA, self.rect.center, self.npc.interaction_range, 1)
+        # pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME   , self.rect.center, self.npc.reproduce_range  , 1)
+        # pygame.draw.circle(line_surface, basic_colors.ALPHA_LIME_2 , self.rect.center, self.npc.share_range      , 1)
 
         text = self.npc.name
         font = pygame.font.SysFont('Sans', 10)

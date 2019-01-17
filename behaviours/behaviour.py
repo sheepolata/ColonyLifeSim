@@ -114,11 +114,14 @@ class EmptyBehaviour(Behaviour):
         return 1
 
 class IdleBehaviour(Behaviour):
-    def __init__(self, entity, env):
+    def __init__(self, entity, env, rdspan=40, state="idle", label="I", length_check=True):
         super(IdleBehaviour, self).__init__(entity, env)
 
-        self.state = "idle"
-        self.label = "I"
+        self.state = state
+        self.label = label
+
+        self.rdspan = rdspan
+        self.length_check = length_check
 
         self.collision_debug = []
 
@@ -126,18 +129,19 @@ class IdleBehaviour(Behaviour):
         del self.path[:]
         self.path.append(self.entity.getPose())
 
-        rdspan = 40
-
-        tx = self.entity.getPose()[0] + random.randint(-rdspan, rdspan)
-        ty = self.entity.getPose()[1] + random.randint(-rdspan, rdspan)
+        tx = self.entity.getPose()[0] + random.randint(-self.rdspan, self.rdspan)
+        ty = self.entity.getPose()[1] + random.randint(-self.rdspan, self.rdspan)
 
         rect_temp = self.env.getCurrentRect((tx, ty))
         rect_ent_temp = self.env.getCurrentRect(self.entity.getPose())
-        if(rect_temp != None and rect_ent_temp 
-            and pf.getPathLength(self.env, rect_ent_temp.center, 
-                rect_temp.center) <= 175
-            ):
-            _target = (tx, ty)
+        if(rect_temp != None and rect_ent_temp):
+            if self.length_check:
+                if pf.getPathLength(self.env, rect_ent_temp.center, rect_temp.center) <= 175:
+                    _target = (tx, ty)
+                else:
+                    return -1
+            else:
+                _target = (tx, ty)
 
             return super(IdleBehaviour, self).computePath(_target, None)
         else: 
@@ -148,6 +152,22 @@ class IdleBehaviour(Behaviour):
         if ns == 1:
             self.computePath()
         return ns
+
+class ExploreBehaviour(IdleBehaviour):
+    def __init__(self, entity, env):
+        super(ExploreBehaviour, self).__init__(entity, env)
+        self.state = "explorebehaviour"
+        self.label = "XPLORE"
+
+        self.rdspan = 500
+
+        self.recompute = 0
+
+    def computePath(self):
+        return super(ExploreBehaviour, self).computePath()
+
+    def nextStep(self):
+        super(ExploreBehaviour, self).nextStep()
 
 class GOTOBehaviour(Behaviour):
     def __init__(self, entity, env, specific_target):
@@ -443,22 +463,6 @@ class ReproduceBehaviour(GOTOBehaviour):
             if self.recompute == 0:
                 self.computePath()
             return 0
-        
-class SearchFoodBehaviour(GOTOBehaviour):
-    def __init__(self, entity, env, goal):
-        super(SearchFoodBehaviour, self).__init__(entity, env, goal.getPose())
-        self.state = "searchfoodbehaviour"
-        self.label = "SCHFOOD"
-
-        self.recompute = 0
-
-    def computePath(self):
-        return super(SearchFoodBehaviour, self).computePath(_target_rect=self.goal.sprite.rect)
-
-    def nextStep(self):
-        super(SearchFoodBehaviour, self).nextStep()
-        
-        pass
                     
 
 class SocialInteraction(Behaviour):

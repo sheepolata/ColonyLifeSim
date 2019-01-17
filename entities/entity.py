@@ -366,8 +366,8 @@ class NPC(Entity):
             self.bagpack["food"] -= v 
             other.putInBagpack("food", v)
 
-            self.setLastSocialInteraction(other, "share {} food with {}".format(v, other.name))
-            other.setLastSocialInteraction(self, "{} food shared by {}".format(v, self.name))
+            self.setLastSocialInteraction(other, "shared {} food with {}".format(round(v, 2), other.name))
+            other.setLastSocialInteraction(self, "{} food shared by {}".format(round(v, 2), self.name))
 
             if other not in self.social_xp.keys(): self.social_xp[other] = 0
             if self not in other.social_xp.keys(): other.social_xp[self] = 0
@@ -642,14 +642,17 @@ class NPC(Entity):
             self.hunger = 0
         return consume
 
-    def setIdleBehaviour(self):
+    def setIdleBehaviour(self, rndspan=40, state="idle", label="I", length_check=True):
         self.pause()
         if self.behaviour!= None and self.behaviour.state == "idle":
             return
         # self.behaviour = None
-        self.behaviour = behaviour.IdleBehaviour(self, self.env)
+        self.behaviour = behaviour.IdleBehaviour(self, self.env, rndspan, state, label, length_check)
         self.behaviour.computePath()
         self.resume()
+
+    def setExploreBehaviour(self):
+        self.setIdleBehaviour(rndspan=175, state="explore", label="EXPL", length_check=False)
 
     def setGOTOBehaviour(self, st):
         self.pause()
@@ -729,9 +732,11 @@ class NPC(Entity):
     def setDefaultBehaviour(self):
         if (self.known_food 
             and [x for x in self.known_food if x.harvestable]
-            and "food" not in self.bagpack.keys() 
-            or ("food" in self.bagpack.keys() and self.bagpack["food"] <= self.hunger_thresh*0.40)):
+            and ("food" not in self.bagpack.keys() 
+            or ("food" in self.bagpack.keys() and self.bagpack["food"] <= self.hunger_thresh*0.33))):
                 self.setCollectFoodBehaviour()
+        elif (not self.known_food or not [x for x in self.known_food if x.harvestable]):
+            self.setExploreBehaviour()
         elif self.social_cooldown <= 0 and self.neighbours:
             l = [x for x in self.neighbours if utils.distance2p(self.getPose(), x.getPose()) < self.interaction_range]
             if l:
@@ -756,6 +761,28 @@ class NPC(Entity):
         if self.dead:
             return
 
+        if self.reproduction_cd == 0 and self.age >= 16 and self.age <= 80 and self.will_reproduce and self.partner != None and self.partner not in self.parents:
+            self.setReproduceBehaviour(self.partner)
+            self.will_reproduce = False
+            self.partner = None
+        # else:
+        #     self.will_reproduce = False
+        #     self.partner = None
+
+        if self.will_sharefood and self.share_to != None:
+            self.setShareFoodBehaviour(self.share_to)
+            self.will_sharefood = False
+            self.share_to = None
+
+        if self.will_attack and self.attack_target != None:
+            self.setAttackBehaviour(self.attack_target)
+            self.will_attack = False
+            self.attack_target = None
+
+        # if not self.known_food:
+        #     # print(self.name, " no food source in sight")
+        #     self.setExploreBehaviour()
+
         if self.have_to_eat and (self.behaviour.state != "wait" if self.behaviour != None else True):
             if self.haveFood():
                 # cons = self.consumeFood()
@@ -773,23 +800,6 @@ class NPC(Entity):
 
                 self.count_check_availaible_food = (self.count_check_availaible_food + 1) % self.count_check_availaible_food_period
 
-        if self.will_attack and self.attack_target != None:
-            self.setAttackBehaviour(self.attack_target)
-            self.will_attack = False
-            self.attack_target = None
-
-        if self.reproduction_cd == 0 and self.age >= 16 and self.age <= 80 and self.will_reproduce and self.partner != None and self.partner not in self.parents:
-            self.setReproduceBehaviour(self.partner)
-            self.will_reproduce = False
-            self.partner = None
-        # else:
-        #     self.will_reproduce = False
-        #     self.partner = None
-
-        if self.will_sharefood and self.share_to != None:
-            self.setShareFoodBehaviour(self.share_to)
-            self.will_sharefood = False
-            self.share_to = None
 
         # print(self.name, "update", self.behaviour.state)
         if self.behaviour != None and self.behaviour.state != "empty" and self.behaviour.state != "nothing":
@@ -805,10 +815,11 @@ class NPC(Entity):
                         or self.behaviour.label == "EAT"
                         or self.behaviour.label == "ATCK"
                         or self.behaviour.label == "BREED"
-                        or self.behaviour.label == "SHAFO")
+                        or self.behaviour.label == "SHAFO"
+                        or self.behaviour.label == "EXPL")
                         and ns == 1):
-                self.setDefaultBehaviour()     
-            elif self.behaviour.label == "I" and ns == 1:
+                self.setDefaultBehaviour()  
+            elif (self.behaviour.label == "I") and ns == 1:
                 self.setWaitBehaviour(50)
         else:
             self.setDefaultBehaviour()
